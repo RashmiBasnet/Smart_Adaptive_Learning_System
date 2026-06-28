@@ -1,0 +1,210 @@
+// SALS database schema.
+// DB tables/columns are snake_case (via @map/@@map); Prisma fields are camelCase.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Allowed values for learning-material type and difficulty tier.
+enum MaterialType {
+  theory
+  example
+  code
+  revision
+}
+
+enum DifficultyTier {
+  easier
+  standard
+  harder
+}
+
+// Recommendation categories. ALL_MASTERED is not stored (it has no target concept).
+enum RecommendationType {
+  REVISE_PREREQUISITE
+  PRACTISE_CURRENT
+  ADVANCE_NEXT
+  ALL_MASTERED
+}
+
+model Student {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  attempts        QuizAttempt[]
+  mastery         ConceptMastery[]
+  masteryHistory  MasteryHistory[]
+  recommendations Recommendation[]
+
+  @@map("students")
+}
+
+// Graph node.
+model Concept {
+  id          Int     @id @default(autoincrement())
+  slug        String  @unique
+  title       String
+  domain      String
+  description String?
+
+  // Edges where this concept is the dependent ("this depends on prerequisite").
+  prerequisites ConceptPrerequisite[] @relation("ConceptToPrerequisites")
+  // Edges where this concept serves as a prerequisite for others.
+  dependents    ConceptPrerequisite[] @relation("PrerequisiteToConcepts")
+
+  learningMaterials LearningMaterial[]
+  questions         Question[]
+  attempts          QuizAttempt[]
+  mastery           ConceptMastery[]
+  masteryHistory    MasteryHistory[]
+  recommendations   Recommendation[]
+
+  @@map("concepts")
+}
+
+// Directed graph edge: one row = "conceptId depends on prerequisiteId".
+model ConceptPrerequisite {
+  id             Int @id @default(autoincrement())
+  conceptId      Int @map("concept_id")
+  prerequisiteId Int @map("prerequisite_id")
+
+  concept      Concept @relation("ConceptToPrerequisites", fields: [conceptId], references: [id], onDelete: Cascade)
+  prerequisite Concept @relation("PrerequisiteToConcepts", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@unique([conceptId, prerequisiteId])
+  @@map("concept_prerequisites")
+}
+
+model LearningMaterial {
+  id             Int            @id @default(autoincrement())
+  conceptId      Int            @map("concept_id")
+  type           MaterialType
+  difficultyTier DifficultyTier @map("difficulty_tier")
+  body           String
+  orderIndex     Int            @map("order_index")
+
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@map("learning_materials")
+}
+
+model Question {
+  id          Int     @id @default(autoincrement())
+  conceptId   Int     @map("concept_id")
+  difficulty  String
+  stem        String
+  explanation String?
+  marks       Int     @default(1)
+
+  concept   Concept            @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  options   QuestionOption[]
+  responses QuestionResponse[]
+
+  @@map("questions")
+}
+
+model QuestionOption {
+  id         Int     @id @default(autoincrement())
+  questionId Int     @map("question_id")
+  text       String
+  isCorrect  Boolean @map("is_correct")
+
+  question  Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  responses QuestionResponse[]
+
+  @@map("question_options")
+}
+
+model QuizAttempt {
+  id               Int       @id @default(autoincrement())
+  studentId        Int       @map("student_id")
+  conceptId        Int       @map("concept_id")
+  isPlacement      Boolean   @default(false) @map("is_placement")
+  difficultyServed String?   @map("difficulty_served")
+  score            Float?
+  startedAt        DateTime  @default(now()) @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+
+  student         Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept         Concept            @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  responses       QuestionResponse[]
+  masteryHistory  MasteryHistory[]
+  recommendations Recommendation[]
+
+  @@map("quiz_attempts")
+}
+
+model QuestionResponse {
+  id               Int     @id @default(autoincrement())
+  attemptId        Int     @map("attempt_id")
+  questionId       Int     @map("question_id")
+  selectedOptionId Int?    @map("selected_option_id")
+  isCorrect        Boolean @map("is_correct")
+  timeTakenSeconds Int?    @map("time_taken_seconds")
+
+  attempt        QuizAttempt     @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+
+  @@map("question_responses")
+}
+
+// The learner model: one row per student per concept.
+model ConceptMastery {
+  id            Int      @id @default(autoincrement())
+  studentId     Int      @map("student_id")
+  conceptId     Int      @map("concept_id")
+  // Stores the Elo rating; the 0–100% shown to students is derived from it.
+  masteryScore  Float    @map("mastery_score")
+  attemptsCount Int      @default(0) @map("attempts_count")
+  lastUpdated   DateTime @updatedAt @map("last_updated")
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, conceptId])
+  @@map("concept_mastery")
+}
+
+// One row per concept per graded quiz: the mastery trajectory and the reason for each change.
+model MasteryHistory {
+  id            Int      @id @default(autoincrement())
+  studentId     Int      @map("student_id")
+  conceptId     Int      @map("concept_id")
+  masteryScore  Float    @map("mastery_score")
+  previousScore Float?   @map("previous_score")
+  reason        String?
+  attemptId     Int?     @map("attempt_id")
+  recordedAt    DateTime @default(now()) @map("recorded_at")
+
+  student Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept Concept      @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  attempt QuizAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+
+  @@map("mastery_history")
+}
+
+// Stored recommendations; the reason is saved when generated, not recomputed.
+model Recommendation {
+  id                   Int      @id @default(autoincrement())
+  studentId            Int                @map("student_id")
+  conceptId            Int                @map("concept_id")
+  type                 RecommendationType
+  reason               String
+  triggeredByAttemptId Int?     @map("triggered_by_attempt_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  student            Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept            Concept      @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  triggeredByAttempt QuizAttempt? @relation(fields: [triggeredByAttemptId], references: [id], onDelete: SetNull)
+
+  @@map("recommendations")
+}
