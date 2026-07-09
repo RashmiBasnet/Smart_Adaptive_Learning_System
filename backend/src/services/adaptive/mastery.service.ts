@@ -1,6 +1,3 @@
-// Applies the Elo engine (mastery.ts) to the database: reads the current rating,
-// runs the engine, and writes the updated mastery + a history row.
-
 import { prisma } from "../../config/prisma";
 import {
   ELO,

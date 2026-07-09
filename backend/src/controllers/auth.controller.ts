@@ -1,4 +1,3 @@
-// Auth controllers: validate the request, call the service, send the result.
 import { Request, Response } from "express";
 import { registerSchema, loginSchema } from "../validators/auth.validator";
 import { registerStudent, loginStudent } from "../services/auth.service";

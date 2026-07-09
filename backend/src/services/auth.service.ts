@@ -1,4 +1,3 @@
-// Registration and login: password hashing, uniqueness checks, and token issuance.
 import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma";
 import { signToken } from "../utils/jwt";
@@ -38,7 +37,6 @@ export async function registerStudent(input: RegisterInput): Promise<AuthResult>
 
 export async function loginStudent(input: LoginInput): Promise<AuthResult> {
   const student = await prisma.student.findUnique({ where: { email: input.email } });
-  // Same message for unknown email and wrong password, so we don't reveal which accounts exist.
   if (!student || !(await bcrypt.compare(input.password, student.passwordHash))) {
     throw new HttpError(401, "Invalid email or password");
   }

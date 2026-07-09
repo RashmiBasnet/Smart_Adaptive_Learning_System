@@ -1,7 +1,3 @@
-// Recommendation engine: pure functions that pick the next recommendation from
-// the prerequisite graph + per-concept mastery. No database access — persistence
-// lives in recommendation.service.ts.
-
 import { ELO, isMastered, masteryPercent } from "./mastery";
 
 export type RecommendationType =

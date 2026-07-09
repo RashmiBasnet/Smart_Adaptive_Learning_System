@@ -1,7 +1,3 @@
-// Elo mastery engine: pure functions that compute rating changes per (student, concept).
-// No database access — persistence is handled in mastery.service.ts.
-
-// Tunable constants. Do not change without project-chat approval.
 export const ELO = {
   COLD_START_RATING: 1200, // starting rating for an unseen concept
   K_FACTOR: 32, // how strongly one answer moves the rating

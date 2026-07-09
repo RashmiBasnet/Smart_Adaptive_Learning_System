@@ -5,6 +5,7 @@ import morgan from "morgan";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/error";
 import authRoutes from "./routes/auth.routes";
+import quizRoutes from "./routes/quiz.routes";
 
 export const app = express();
 
@@ -14,7 +15,6 @@ app.use(express.json());
 if (env.NODE_ENV !== "test") app.use(morgan("dev"));
 
 app.use("/auth", authRoutes);
-
-// Later: mount quiz + dashboard routes here.
+app.use("/quiz", quizRoutes);
 
 app.use(errorHandler);

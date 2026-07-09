@@ -1,6 +1,3 @@
-// Runs the recommendation engine (recommendation.ts) against the database and
-// stores the result. Called on graded-quiz completion; the dashboard only reads.
-
 import { prisma } from "../../config/prisma";
 import { ELO } from "./mastery";
 import {
