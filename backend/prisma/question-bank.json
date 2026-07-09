@@ -1,0 +1,204 @@
+{
+  "_meta": {
+    "title": "SALS Question Bank + Lessons",
+    "domain": "Data Structures",
+    "format": "single-correct MCQ, 4 options, 1 mark each",
+    "difficultyRating": { "easy": 1000, "medium": 1200, "hard": 1400 },
+    "calibration": {
+      "easy": "A fact the lesson states plainly. Big-O and defined terms (index) allowed. No operation to perform, no 'why'.",
+      "medium": "Do or trace exactly one operation.",
+      "hard": "Justify a trade-off or reason about an edge case, strictly within the concept's scope."
+    },
+    "correctIndex": "0-based index into options array",
+    "perQuiz": 6,
+    "bands": {
+      "weak": { "range": "<40", "mix": "3 easy / 3 medium" },
+      "medium": { "range": "40-70", "mix": "2 easy / 2 medium / 2 hard" },
+      "strong": { "range": ">70", "mix": "3 medium / 3 hard" }
+    }
+  },
+
+  "concepts": [
+    {
+      "slug": "arrays",
+      "name": "Arrays",
+      "prerequisites": [],
+      "lesson": "An array stores a list of elements in one continuous block of memory, side by side. Each element has a position number called its **index**, and indexes usually start at 0. Because the memory is continuous, the computer can jump straight to any element from its index, so reading by index is **O(1)** (one step) no matter how big the array is.\n\nThe cost shows up when you change the shape. Inserting or deleting in the middle or at the front means every element after that spot has to shift over, which is **O(n)**. A *fixed-size* array has its size set when it's created; a *dynamic* array can grow. A *2D array* like grid[3][4] is just rows of arrays \u2014 3 rows of 4, so 12 elements \u2014 and grid[r][c] is still O(1) because the position is computed from the row, column, and row length.\n\nExample: in [10,20,30,40], deleting index 1 leaves [10,30,40] after the shift. Reversing in place (swap element i with the mirror element at the other end) needs no extra memory.",
+      "questions": [
+        { "difficulty": "easy", "marks": 1, "text": "An array stores its elements in...", "options": ["one continuous block of memory, side by side", "scattered random locations", "a tree shape", "two separate halves"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Reading an array element when you know its index takes...", "options": ["O(1)", "O(n)", "O(log n)", "O(n\u00b2)"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Array indexes usually start counting at...", "options": ["0", "1", "-1", "any number you choose"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Inserting a new element at the front of an array takes...", "options": ["O(n)", "O(1)", "O(log n)", "no time at all"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "A 2D array grid[3][4] (3 rows, 4 columns) holds how many elements?", "options": ["12", "7", "3", "4"], "correctIndex": 0 },
+
+        { "difficulty": "medium", "marks": 1, "text": "[10,20,30,40] \u2014 delete index 1 and shift the rest left. Result?", "options": ["[10,30,40]", "[10,20,40]", "[20,30,40]", "[10,30,40,40]"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "[5,8,12] \u2014 insert 7 at index 1, shifting right. Result?", "options": ["[5,7,8,12]", "[7,5,8,12]", "[5,8,7,12]", "[5,8,12,7]"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "Reversing the array [1,2,3,4] in place by swapping mirror elements needs how many swaps?", "options": ["2", "4", "3", "1"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "Traverse [4,1,7,2] left to right and stop at the first element greater than 5. What is its index?", "options": ["2", "0", "1", "3"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "Add up all elements of [3,6,2] in a single traversal. The total is...", "options": ["11", "9", "8", "12"], "correctIndex": 0 },
+
+        { "difficulty": "hard", "marks": 1, "text": "Your program inserts and deletes at the front constantly but almost never reads by index. Why is a plain array a poor fit?", "options": ["Every front insert/delete shifts all elements, costing O(n) each time", "Arrays can't hold more than 100 elements", "Reading by index becomes O(n)", "Arrays can't be traversed"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "The maximum number of items is unknown and could grow large. What is the trade-off of using a fixed-size array?", "options": ["You either over-allocate and waste memory, or run out of space", "Indexing becomes O(n)", "Traversal stops working", "The array can only be read once"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Algorithm A reverses an array in place (no extra memory). Algorithm B builds a new reversed copy (O(n) memory). Both run in O(n) time. When is B still the better choice?", "options": ["When the original array must stay unchanged", "When the array is empty", "When indexing must stay O(1)", "Never \u2014 A is always better"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Reaching grid[2][3] in a 2D array is still O(1). Why?", "options": ["The position is computed directly from row, column, and row length", "It searches row by row until it finds it", "2D arrays cache past lookups", "It is actually O(n)"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "When reversing an odd-length array in place by swapping mirror elements, what happens to the middle element?", "options": ["It stays put \u2014 it is its own mirror position", "It swaps with index 0", "It is removed", "It causes an error"], "correctIndex": 0 }
+      ]
+    },
+
+    {
+      "slug": "linked-lists",
+      "name": "Linked Lists",
+      "prerequisites": ["arrays"],
+      "lesson": "A linked list is a chain of **nodes**. Each node holds a piece of data and a **pointer** to the next node. The first node is the **head**; the last points to nothing. Unlike an array, the nodes are not side by side in memory \u2014 they're linked only by their pointers.\n\nThat design flips the cost trade-off. There is no jumping straight to the nth element: to reach it you start at the head and follow pointers one by one, which is **O(n)**. But if you already hold a node, inserting or deleting next to it is **O(1)** \u2014 you just rewire a couple of pointers, no shifting. A *singly* linked list points only forward; a *doubly* linked list also points back to the previous node, which makes backward movement and deletion easier but uses a little more memory per node.\n\nRule of thumb: arrays win when you mostly read by position; linked lists win when you mostly insert/delete at known points and don't need random access.\n\nExample: in A\u2192B\u2192C, to insert X after A you set A's pointer to X and X's pointer to B, giving A\u2192X\u2192B\u2192C.",
+      "questions": [
+        { "difficulty": "easy", "marks": 1, "text": "Each node in a linked list stores its data and...", "options": ["a pointer to the next node", "its own index number", "a hash code", "the whole list"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "The first node of a linked list is called the...", "options": ["head", "tail", "root", "index"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Reaching the nth element of a linked list by position takes...", "options": ["O(n)", "O(1)", "O(log n)", "no time at all"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "A node in a doubly linked list points to...", "options": ["both the next and the previous node", "only the next node", "only the head", "only the tail"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Compared to an array, a linked list does NOT support...", "options": ["jumping straight to an element by position", "storing data", "being traversed", "holding many items"], "correctIndex": 0 },
+
+        { "difficulty": "medium", "marks": 1, "text": "Singly linked list A\u2192B\u2192C. You hold node A and insert X after it. The list becomes...", "options": ["A\u2192X\u2192B\u2192C", "X\u2192A\u2192B\u2192C", "A\u2192B\u2192X\u2192C", "A\u2192B\u2192C\u2192X"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "List A\u2192B\u2192C\u2192D. You delete B (you have the node before it). The list becomes...", "options": ["A\u2192C\u2192D", "A\u2192B\u2192D", "B\u2192C\u2192D", "A\u2192C\u2192B\u2192D"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "To find a value in an unsorted linked list of n nodes, in the worst case you may check up to...", "options": ["n nodes", "1 node", "log n nodes", "always exactly half"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "You hold a pointer to node B in A\u2192B\u2192C. Inserting a new node right after B is...", "options": ["O(1)", "O(n)", "O(log n)", "impossible"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "Counting the nodes in A\u2192B\u2192C\u2192D by traversal gives...", "options": ["4", "3", "5", "1"], "correctIndex": 0 },
+
+        { "difficulty": "hard", "marks": 1, "text": "Why can't a linked list offer O(1) access to an element by position, the way an array does?", "options": ["Its nodes aren't in continuous memory, so you must follow pointers from the head", "Its nodes have no data", "It can only store sorted values", "Pointers are slower than indexes to read"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Your program mostly inserts and deletes at positions you already hold and never reads by index. Linked list or array?", "options": ["Linked list \u2014 insert/delete at a known node is O(1) and random access isn't needed", "Array \u2014 it's always faster", "Either \u2014 there's no difference", "Neither can do this"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "What is the trade-off of a doubly linked list versus a singly linked list?", "options": ["It allows backward traversal and easier deletion but uses more memory per node", "It is always slower", "It cannot be traversed forward", "It removes the need for a head pointer"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "You have only the head of a long singly linked list and must delete its last node. Why is this O(n)?", "options": ["You must traverse the whole list to reach the node before the last one", "Deleting any node is always O(n)", "The last node has no data", "Singly lists can't be shortened"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Your program mostly reads elements by their position number. Why is an array better than a linked list here?", "options": ["Array reads by position are O(1); a linked list needs O(n) to walk to that position", "Arrays use less memory per element always", "Linked lists can't store numbers", "Arrays never need shifting"], "correctIndex": 0 }
+      ]
+    },
+
+    {
+      "slug": "stacks",
+      "name": "Stacks",
+      "prerequisites": ["arrays"],
+      "lesson": "A stack is a collection where you only ever touch one end: the **top**. It follows **LIFO** \u2014 Last In, First Out \u2014 like a pile of plates where you add and remove from the top. The three operations are **push** (add to the top), **pop** (remove the top), and **peek** (look at the top without removing it). All three are **O(1)**.\n\nA stack can be built on an array or a linked list. The array version is simple and fast but may need resizing if it fills; the linked version grows freely but spends a little extra memory on pointers.\n\nStacks fit any situation where the most recent thing should be handled first: the **call stack** (the function called last returns first), **undo** in an editor (the last action is undone first), checking **balanced parentheses**, and **expression evaluation**.\n\nExample: push 1, push 2, push 3. The stack top to bottom is 3,2,1. A single pop returns 3.",
+      "questions": [
+        { "difficulty": "easy", "marks": 1, "text": "A stack follows which order?", "options": ["Last In, First Out (LIFO)", "First In, First Out (FIFO)", "Sorted order", "Random order"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "push, pop, and peek on a stack each take...", "options": ["O(1)", "O(n)", "O(log n)", "O(n\u00b2)"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "The peek operation...", "options": ["returns the top element without removing it", "removes the top element", "removes the bottom element", "empties the stack"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "The only element you can remove from a stack is the...", "options": ["top", "bottom", "middle", "first one pushed"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Which is a natural use of a stack?", "options": ["undo in a text editor", "serving customers in arrival order", "sorting numbers", "storing key-value pairs"], "correctIndex": 0 },
+
+        { "difficulty": "medium", "marks": 1, "text": "Starting empty: push 1, push 2, push 3, then pop. What does the pop return?", "options": ["3", "1", "2", "nothing"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "push A, push B, pop, push C, pop. What does the second pop return?", "options": ["C", "B", "A", "the stack is empty"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "Starting empty: push 5, push 9, then peek. What is returned, and how many elements remain?", "options": ["9 returned, 2 remain", "9 returned, 1 remains", "5 returned, 2 remain", "5 returned, 1 remains"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "push 1, push 2, push 3, push 4, then pop twice. The top is now...", "options": ["2", "3", "4", "1"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "Using a stack to check the string \"(()\", is it balanced?", "options": ["No \u2014 one '(' is never closed", "Yes \u2014 all brackets match", "No \u2014 there are too many ')'", "It cannot be checked with a stack"], "correctIndex": 0 },
+
+        { "difficulty": "hard", "marks": 1, "text": "Why is a stack the natural structure for an editor's undo feature?", "options": ["The most recent action should be reversed first, which is exactly LIFO", "Actions must be sorted before undoing", "Undo needs the oldest action first", "Stacks store actions in random order"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Function f calls g, which calls h. Why do they finish in the order h, then g, then f?", "options": ["The call stack returns in reverse order of calls \u2014 last called, first to return (LIFO)", "Functions always finish in the order they were called", "The compiler sorts them alphabetically", "g and h finish at the same time"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "What is the trade-off between an array-based stack and a linked-list-based stack?", "options": ["The array version is simple and cache-friendly but may need resizing; the linked version grows freely but uses extra pointer memory", "The array version can't push", "The linked version is always slower", "There is no difference"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "You need to always handle the earliest-arrived item first, not the latest. Is a stack the right choice?", "options": ["No \u2014 that's FIFO behaviour, which needs a queue", "Yes \u2014 a stack handles earliest-first", "Yes \u2014 if you pop twice", "Only if the stack is sorted"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Why does evaluating an expression like 3 + 4 * 2 commonly use a stack?", "options": ["Operands and operators are held and combined in last-in-first-out order during evaluation", "It needs the numbers in sorted order", "A stack stores the final answer only", "Expressions can't be evaluated without FIFO"], "correctIndex": 0 }
+      ]
+    },
+
+    {
+      "slug": "queues",
+      "name": "Queues",
+      "prerequisites": ["arrays"],
+      "lesson": "A queue is a collection where you add at one end and remove at the other, like a line of people. It follows **FIFO** \u2014 First In, First Out. Adding is **enqueue** (at the back); removing is **dequeue** (from the front). Both are **O(1)**.\n\nIf you build a queue on a plain array and keep dequeuing from the front, the freed front slots get stranded \u2014 they can't be reused without shifting everything. A **circular queue** solves this: when the back reaches the end of the array it wraps around to reuse those freed front slots. A linked-list queue avoids the problem differently by growing freely, at the cost of extra pointer memory.\n\nQueues fit anything served in arrival order: **job scheduling**, print queues, and **breadth-first search (BFS)**, where nodes are explored in the order they were discovered.\n\nExample: enqueue 1, 2, 3. A dequeue returns 1 (the first one in). The front is now 2.",
+      "questions": [
+        { "difficulty": "easy", "marks": 1, "text": "A queue follows which order?", "options": ["First In, First Out (FIFO)", "Last In, First Out (LIFO)", "Sorted order", "Random order"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Adding an element to a queue is called...", "options": ["enqueue", "push", "peek", "pop"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Elements are removed from a queue at the...", "options": ["front", "back", "middle", "top"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "enqueue and dequeue each take...", "options": ["O(1)", "O(n)", "O(log n)", "O(n\u00b2)"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Which is a natural use of a queue?", "options": ["serving jobs in arrival order", "undoing the last action", "sorting a list", "storing key-value pairs"], "correctIndex": 0 },
+
+        { "difficulty": "medium", "marks": 1, "text": "enqueue 1, 2, 3, then dequeue. What does the dequeue return?", "options": ["1", "3", "2", "nothing"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "enqueue A, B; dequeue; enqueue C; dequeue. What does the second dequeue return?", "options": ["B", "A", "C", "the queue is empty"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "enqueue 5, 6, 7, 8, then dequeue twice. The front element is now...", "options": ["7", "5", "6", "8"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "After enqueueing X, Y, Z (in that order), the element at the front is...", "options": ["X", "Z", "Y", "none of them"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "You enqueue 3 items, then dequeue 1. How many items remain in the queue?", "options": ["2", "3", "1", "0"], "correctIndex": 0 },
+
+        { "difficulty": "hard", "marks": 1, "text": "Why does a circular queue exist?", "options": ["To reuse the freed front slots of a fixed array instead of wasting them", "To sort the elements automatically", "To allow removal from both ends", "To make enqueue O(n)"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Why does breadth-first search use a queue?", "options": ["Nodes are explored in the order they were discovered \u2014 FIFO, level by level", "Nodes must be sorted first", "It needs the most recent node first", "A queue stores the final path only"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "In a plain (non-circular) array-based queue, what does repeated dequeuing cause?", "options": ["Unused space builds up at the front and can't be reused without shifting", "The queue sorts itself", "enqueue becomes impossible", "The back element is lost"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "What is the trade-off between an array-based circular queue and a linked-list queue?", "options": ["The circular array is fixed-size but fast; the linked queue grows freely but uses extra memory", "The linked queue can't dequeue", "The array queue can't enqueue", "There is no difference"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "You need to always handle the most recently added item first. Is a queue the right choice?", "options": ["No \u2014 that's LIFO behaviour, which needs a stack", "Yes \u2014 a queue handles most-recent-first", "Yes \u2014 if you dequeue twice", "Only if the queue is circular"], "correctIndex": 0 }
+      ]
+    },
+
+    {
+      "slug": "hash-tables",
+      "name": "Hash Tables",
+      "prerequisites": ["arrays", "linked-lists"],
+      "lesson": "A hash table stores key-value pairs and finds them fast. It runs the **key** through a **hash function** that produces a **bucket** (a slot number), and the value is stored there. To look something up, it hashes the key again and goes straight to that bucket \u2014 so average lookup and insert are **O(1)**.\n\nThe catch is **collisions**: two different keys can hash to the same bucket. Two common fixes: **chaining** stores all colliding items in a small list at that bucket; **open addressing** probes for the next free slot. The **load factor** (items \u00f7 buckets) measures how full the table is. As it rises, collisions rise, and operations slow down. In the worst case \u2014 a bad hash function sending most keys to one bucket \u2014 lookup degrades to scanning a list, which is **O(n)**, losing the whole advantage.\n\nExample: with hash(key) = key mod 5, the key 12 lands in bucket 2 (12 mod 5 = 2). If another key also gives bucket 2, that's a collision.",
+      "questions": [
+        { "difficulty": "easy", "marks": 1, "text": "A hash table uses a hash function to map a key to a...", "options": ["bucket (slot) where the value is stored", "sorted position", "pointer to the head", "tree node"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "The average lookup time in a hash table is...", "options": ["O(1)", "O(n)", "O(log n)", "O(n\u00b2)"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "A collision happens when...", "options": ["two different keys hash to the same bucket", "the table is empty", "a key is deleted", "two values are equal"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "The worst-case lookup time in a hash table is...", "options": ["O(n)", "O(1)", "O(log n)", "always O(1)"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "The load factor of a hash table measures...", "options": ["how full it is (items \u00f7 buckets)", "how many keys are sorted", "the size of each value", "the number of collisions only"], "correctIndex": 0 },
+
+        { "difficulty": "medium", "marks": 1, "text": "Chaining handles a collision by...", "options": ["storing the colliding items in a list at that bucket", "deleting the older key", "resizing to one bucket", "ignoring the new key"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "Three keys hash to buckets 3, 5, and 3. How many collisions occur?", "options": ["1", "0", "2", "3"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "With open addressing, a collision is resolved by...", "options": ["probing for the next free slot", "building a list at the bucket", "deleting the bucket", "doubling every value"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "A hash table has 10 buckets and holds 7 items. Its load factor is...", "options": ["0.7", "7", "10", "1.4"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "Using hash(key) = key mod 5, the key 12 is placed in bucket...", "options": ["2", "1", "5", "12"], "correctIndex": 0 },
+
+        { "difficulty": "hard", "marks": 1, "text": "Lookups are O(1) on average but O(n) in the worst case. What causes the worst case?", "options": ["Many keys colliding into one bucket, so lookup degrades to scanning a list", "Too few keys in the table", "Using integer keys", "Starting the index at 0"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "What happens to performance as the load factor gets very high?", "options": ["Collisions increase, so operations slow down", "Lookups get faster", "The table sorts itself", "Keys are deleted automatically"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "What is the trade-off between chaining and open addressing?", "options": ["Chaining uses extra memory for lists but copes better when full; open addressing saves memory but degrades as it fills", "Chaining can't handle collisions", "Open addressing is always faster", "There is no difference"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "A poorly designed hash function sends almost every key to the same bucket. What is the effect?", "options": ["Performance drops toward O(n), losing the hash table's advantage", "Lookups become O(log n)", "The table uses no memory", "Collisions disappear"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Why does a hash table need its keys spread evenly across buckets?", "options": ["To keep buckets balanced so lookups stay close to O(1)", "To keep the keys sorted", "To reduce the number of buckets to one", "To make deletion impossible"], "correctIndex": 0 }
+      ]
+    },
+
+    {
+      "slug": "trees",
+      "name": "Trees",
+      "prerequisites": ["linked-lists"],
+      "lesson": "A tree is a branching structure of nodes. The top node is the **root**; a node with no children is a **leaf**. A node's **depth** is its distance from the root, and the tree's **height** is the longest root-to-leaf distance. In a **binary tree**, each node has at most two children.\n\nA **binary search tree (BST)** adds a rule: for every node, smaller values go in its left subtree and larger values in its right. That rule makes searching efficient \u2014 at each step you go left or right, so search and insert cost **O(h)**, where h is the height. Three traversal orders matter: **in-order** (left, node, right) visits a BST's values in sorted order; **pre-order** visits the node before its subtrees; **post-order** visits the subtrees first.\n\nThe danger: if values are inserted already sorted, the tree grows in one direction \u2014 **skewed**, like a linked list \u2014 and search becomes O(n). A **balanced** tree keeps height near log n, so search stays O(log n).\n\nExample: insert 5, then 3, then 8. 3 < 5 so it becomes 5's left child; 8 > 5 so it becomes the right child.",
+      "questions": [
+        { "difficulty": "easy", "marks": 1, "text": "The top node of a tree is called the...", "options": ["root", "leaf", "head", "branch"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "A node with no children is called a...", "options": ["leaf", "root", "parent", "head"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "In a binary tree, each node has at most...", "options": ["2 children", "1 child", "3 children", "any number of children"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "In a binary search tree, values smaller than a node go in its...", "options": ["left subtree", "right subtree", "parent", "root only"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Searching a binary search tree takes time proportional to the tree's...", "options": ["height", "number of leaves", "width", "root value"], "correctIndex": 0 },
+
+        { "difficulty": "medium", "marks": 1, "text": "Insert 5 into an empty BST, then insert 3. The value 3 becomes the ___ child of 5.", "options": ["left", "right", "root", "parent"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "An in-order traversal of a binary search tree visits the values in...", "options": ["ascending sorted order", "reverse order", "random order", "insertion order"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "A BST has root 10. Inserting 15 places it in the...", "options": ["right subtree", "left subtree", "root's place", "a new root"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "A tree has a root with two children and nothing else. Its height (counting edges, root = 0) is...", "options": ["1", "0", "2", "3"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "A pre-order traversal visits...", "options": ["the node before its subtrees", "the subtrees before the node", "only the leaves", "only the root"], "correctIndex": 0 },
+
+        { "difficulty": "hard", "marks": 1, "text": "Every value is inserted into a BST in already-sorted order. What does the tree become?", "options": ["Skewed like a linked list, with search degrading to O(n)", "Perfectly balanced", "A binary heap", "Empty"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Why is searching a balanced binary search tree faster than searching a skewed one?", "options": ["A balanced tree keeps height near log n, so search is O(log n) instead of O(n)", "Balanced trees store fewer nodes", "Skewed trees can't be searched", "Balanced trees sort on every search"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "BST search is O(h), where h is the height. What makes h large and search slow?", "options": ["An unbalanced (skewed) tree", "Too many leaves", "Using in-order traversal", "A small root value"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Why does an in-order traversal of a BST produce values in sorted order?", "options": ["It visits the smaller (left) subtree, then the node, then the larger (right) subtree", "It sorts the values as it goes", "It visits leaves first", "It only works on balanced trees"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Compare search cost in a skewed BST versus a balanced BST of the same values.", "options": ["Skewed is O(n); balanced is O(log n)", "Both are O(1)", "Skewed is faster", "Both are O(n)"], "correctIndex": 0 }
+      ]
+    },
+
+    {
+      "slug": "graphs",
+      "name": "Graphs",
+      "prerequisites": ["trees", "queues", "stacks"],
+      "lesson": "A graph is a set of **vertices** (nodes) joined by **edges** (connections). Edges can be **directed** (one-way, A\u2192B) or **undirected** (two-way), and **weighted** edges carry a value or cost. A **path** is a sequence of edges from one vertex to another; a **cycle** is a path that returns to where it started; a graph is **connected** if every vertex can be reached from every other.\n\nTwo ways to store a graph: an **adjacency matrix** is an n\u00d7n grid marking which vertices connect \u2014 checking a specific edge is O(1), but it always uses O(n\u00b2) space even when there are few edges. An **adjacency list** stores, for each vertex, only the edges it actually has \u2014 saving memory for sparse graphs (few edges), though edge checks are slower.\n\nTwo ways to explore: **breadth-first search (BFS)** uses a **queue** to fan out level by level, visiting nearest vertices first; **depth-first search (DFS)** uses a **stack** (or recursion) to go as deep as possible before backtracking.\n\nExample: BFS from a start vertex visits all its direct neighbours before going any further out.",
+      "questions": [
+        { "difficulty": "easy", "marks": 1, "text": "A graph is made of vertices and...", "options": ["edges", "leaves", "buckets", "indexes"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "In a directed graph, each edge has...", "options": ["a direction", "a weight only", "no endpoints", "exactly two weights"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "A weighted edge carries...", "options": ["a value or cost", "two directions", "a hash code", "an index"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Breadth-first search explores a graph using a...", "options": ["queue", "stack", "tree", "hash table"], "correctIndex": 0 },
+        { "difficulty": "easy", "marks": 1, "text": "Depth-first search explores a graph using a...", "options": ["stack (or recursion)", "queue", "sorted array", "hash table"], "correctIndex": 0 },
+
+        { "difficulty": "medium", "marks": 1, "text": "A path that starts and ends at the same vertex is called a...", "options": ["cycle", "leaf", "tree", "root"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "An adjacency matrix for a graph of n vertices uses space...", "options": ["O(n\u00b2)", "O(n)", "O(log n)", "O(1)"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "From a starting vertex, BFS visits...", "options": ["the nearest (fewest-edge) vertices first", "the deepest vertices first", "vertices in sorted order", "only leaf vertices"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "DFS explores by...", "options": ["going as deep as possible before backtracking", "visiting all neighbours first", "sorting the vertices", "checking edges at random"], "correctIndex": 0 },
+        { "difficulty": "medium", "marks": 1, "text": "A graph where every vertex can be reached from every other vertex is...", "options": ["connected", "directed", "weighted", "cyclic"], "correctIndex": 0 },
+
+        { "difficulty": "hard", "marks": 1, "text": "For a sparse graph (few edges), why is an adjacency list better than an adjacency matrix?", "options": ["The list stores only the edges that exist; the matrix wastes O(n\u00b2) space on absent edges", "The list is always faster for every operation", "The matrix can't store sparse graphs", "The list checks any edge in O(1)"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "In an unweighted graph, why does BFS find the path with the fewest edges?", "options": ["It explores level by level outward, so nearer vertices are reached first", "It sorts edges by weight", "It always uses a stack", "It checks every path and compares them"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "What is one advantage an adjacency matrix has over an adjacency list?", "options": ["Checking whether a specific edge exists is O(1)", "It always uses less memory", "It handles sparse graphs better", "It avoids storing vertices"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "For a dense graph (many edges), how do the matrix and list compare?", "options": ["The matrix is reasonable; the list loses its memory advantage when edges are many", "The list is always better", "The matrix can't store dense graphs", "Both use O(1) space"], "correctIndex": 0 },
+        { "difficulty": "hard", "marks": 1, "text": "Why does DFS use a stack?", "options": ["It must remember where to backtrack \u2014 the last vertex visited is the first returned to (LIFO)", "It needs the earliest vertex first", "A stack sorts the vertices", "Edges must be weighted for DFS"], "correctIndex": 0 }
+      ]
+    }
+  ]
+}
