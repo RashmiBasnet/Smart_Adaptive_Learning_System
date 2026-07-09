@@ -1,5 +1,5 @@
 import { prisma } from "../config/prisma";
-import { QUESTION_DIFFICULTY, masteryPercent } from "./adaptive/mastery";
+import { ELO, QUESTION_DIFFICULTY } from "./adaptive/mastery";
 import { recordConceptMastery } from "./adaptive/mastery.service";
 import { generateRecommendation } from "./adaptive/recommendation.service";
 import { HttpError } from "../utils/httpError";
@@ -8,17 +8,33 @@ import type { SubmitInput } from "../validators/quiz.validator";
 const QUESTIONS_PER_QUIZ = 6;
 
 type Band = "weak" | "medium" | "strong";
+type Difficulty = "easy" | "medium" | "hard";
 
-// How many questions of each difficulty to serve per mastery band.
-const BAND_MIX: Record<Band, { easy: number; medium: number; hard: number }> = {
-  weak: { easy: 3, medium: 3, hard: 0 },
+const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"];
+
+// How many questions of each difficulty to serve per mastery band (approved
+// step-5 bands). Each row sums to QUESTIONS_PER_QUIZ and never zeroes out a
+// difficulty, so every quiz contains at least one question of each difficulty.
+export const BAND_MIX: Record<Band, Record<Difficulty, number>> = {
+  weak: { easy: 3, medium: 2, hard: 1 },
   medium: { easy: 2, medium: 2, hard: 2 },
-  strong: { easy: 0, medium: 3, hard: 3 },
+  strong: { easy: 1, medium: 2, hard: 3 },
 };
 
-function bandFor(masteryPct: number): Band {
-  if (masteryPct < 40) return "weak";
-  if (masteryPct <= 70) return "medium";
+// Nearest-difficulty order used to backfill a shortfall in a difficulty.
+const NEAREST_DIFFICULTY: Record<Difficulty, Difficulty[]> = {
+  easy: ["medium", "hard"],
+  medium: ["easy", "hard"],
+  hard: ["medium", "easy"],
+};
+
+// Mastery band from the persisted Elo rating. Bands are defined directly in
+// rating and anchored to the existing engine constants: below cold-start is
+// weak; cold-start up to (not including) the mastery-unlock rating is medium;
+// at/above the unlock rating (the single "mastered" threshold) is strong.
+export function bandForRating(rating: number): Band {
+  if (rating < ELO.COLD_START_RATING) return "weak";
+  if (rating < ELO.MASTERY_UNLOCK_RATING) return "medium";
   return "strong";
 }
 
@@ -36,13 +52,54 @@ function shuffle<T>(items: T[]): T[] {
   return a;
 }
 
-// The student's current band for a concept (cold-start = weak).
+// Pick the quiz's questions for a band: draw the requested count of each
+// difficulty at random without replacement, then backfill any shortfall from
+// the nearest difficulty so the quiz still holds QUESTIONS_PER_QUIZ questions
+// whenever the concept's overall pool is large enough.
+export function selectQuestions<T extends { difficulty: string }>(
+  questions: T[],
+  band: Band
+): T[] {
+  const mix = BAND_MIX[band];
+  const pools: Record<Difficulty, T[]> = { easy: [], medium: [], hard: [] };
+  for (const q of questions) {
+    if (q.difficulty in pools) pools[q.difficulty as Difficulty].push(q);
+  }
+  for (const d of DIFFICULTIES) pools[d] = shuffle(pools[d]);
+
+  const selected: T[] = [];
+  const shortfall: Record<Difficulty, number> = { easy: 0, medium: 0, hard: 0 };
+
+  // First pass: take as many of each difficulty as requested (and available).
+  for (const d of DIFFICULTIES) {
+    const take = pools[d].splice(0, mix[d]);
+    selected.push(...take);
+    shortfall[d] = mix[d] - take.length;
+  }
+
+  // Backfill any shortfall from the nearest difficulty that still has questions.
+  for (const d of DIFFICULTIES) {
+    while (shortfall[d] > 0) {
+      const donor = NEAREST_DIFFICULTY[d].find((n) => pools[n].length > 0);
+      if (!donor) break; // nothing left anywhere in the concept's pool
+      selected.push(pools[donor].shift()!);
+      shortfall[d]--;
+    }
+  }
+
+  return selected;
+}
+
+// The student's current band for a concept. A student with no mastery row is
+// treated as the cold-start rating (which falls in the medium band); there is
+// no placement test — cold-start is deferred to future work.
 async function currentBand(studentId: number, conceptId: number): Promise<Band> {
   const mastery = await prisma.conceptMastery.findUnique({
     where: { studentId_conceptId: { studentId, conceptId } },
     select: { masteryScore: true },
   });
-  return mastery ? bandFor(masteryPercent(mastery.masteryScore)) : "weak";
+  const rating = mastery?.masteryScore ?? ELO.COLD_START_RATING;
+  return bandForRating(rating);
 }
 
 // Assemble a 6-question quiz for a concept, banded by the student's mastery.
@@ -55,7 +112,6 @@ export async function serveQuiz(studentId: number, conceptId: number) {
   if (!concept) throw new HttpError(404, "Concept not found");
 
   const band = await currentBand(studentId, conceptId);
-  const mix = BAND_MIX[band];
 
   const questions = await prisma.question.findMany({
     where: { conceptId },
@@ -67,14 +123,7 @@ export async function serveQuiz(studentId: number, conceptId: number) {
     },
   });
 
-  const byDifficulty: Record<string, typeof questions> = { easy: [], medium: [], hard: [] };
-  for (const q of questions) (byDifficulty[q.difficulty] ??= []).push(q);
-
-  const selected: typeof questions = [];
-  for (const tag of ["easy", "medium", "hard"] as const) {
-    const pool = shuffle(byDifficulty[tag] ?? []);
-    selected.push(...pool.slice(0, mix[tag]));
-  }
+  const selected = selectQuestions(questions, band);
 
   return {
     conceptId: concept.id,
