@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getQuiz, submitQuiz } from "../../lib/api/quiz";
+import { ApiError } from "../../lib/api/client";
 import type { QuizResult, ServedQuiz, SubmitAnswer } from "../../lib/types/api";
 import { QuizQuestion } from "../../components/QuizQuestion";
 
@@ -68,6 +69,18 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
     return <p className="py-12 text-center text-slate-500">Preparing your quiz…</p>;
   }
   if (quiz.isError || !shuffledQuiz) {
+    // A 403 from the quiz gate carries the graph-derived lock reason —
+    // surface it verbatim rather than a generic failure message.
+    const lockReason =
+      quiz.error instanceof ApiError ? quiz.error.lockReason : undefined;
+    if (lockReason) {
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <p className="font-semibold text-slate-800">Quiz locked</p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">{lockReason}</p>
+        </div>
+      );
+    }
     return (
       <p className="py-12 text-center text-rose-600">Couldn&apos;t load the quiz.</p>
     );
@@ -140,7 +153,7 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
 // the mastery percentages are MASTERY. They are different numbers from the
 // API and must never be conflated or relabelled.
 function QuizResultScreen({ result }: { result: QuizResult }) {
-  const { correctCount, totalQuestions, mastery, recommendation } = result;
+  const { correctCount, totalQuestions, mastery, recommendation, review } = result;
   const masteryWentUp = mastery.newPercent >= mastery.oldPercent;
 
   return (
@@ -191,6 +204,50 @@ function QuizResultScreen({ result }: { result: QuizResult }) {
         {mastery.reason && (
           <p className="mt-2 text-sm leading-relaxed text-slate-600">{mastery.reason}</p>
         )}
+      </div>
+
+      {/* Per-question review: what was right, what was wrong, and the correct
+          answer where it matters — the feedback that lets a student learn. */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+          Your answers
+        </p>
+        <ul className="mt-3 flex flex-col gap-3">
+          {review.map((item, i) => (
+            <li
+              key={item.questionId}
+              className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3.5"
+            >
+              <span
+                aria-hidden="true"
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                  item.isCorrect ? "bg-emerald-500" : "bg-rose-500"
+                }`}
+              >
+                {item.isCorrect ? "✓" : "✗"}
+              </span>
+              <div className="min-w-0 text-sm">
+                <p className="font-medium text-slate-900">
+                  {i + 1}. {item.stem}
+                </p>
+                <p className={`mt-1 ${item.isCorrect ? "text-emerald-700" : "text-rose-700"}`}>
+                  Your answer: {item.selectedOptionText ?? "(not answered)"}
+                </p>
+                {!item.isCorrect && (
+                  <p className="mt-0.5 text-slate-600">
+                    Correct answer:{" "}
+                    <span className="font-medium text-slate-900">{item.correctOptionText}</span>
+                  </p>
+                )}
+                {item.explanation && (
+                  <p className="mt-1.5 border-l-2 border-slate-200 pl-2.5 text-[13px] leading-relaxed text-slate-500">
+                    {item.explanation}
+                  </p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* 3. New recommendation — verbatim persisted reason, prominent. */}

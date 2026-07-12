@@ -33,6 +33,9 @@ const overviewFixture: DashboardOverview = {
       mastered: false,
       attempts: 3,
       lastAttemptAt: "2026-07-08T10:00:00.000Z",
+      prerequisites: [],
+      locked: false,
+      lockReason: null,
     },
     {
       conceptId: 7,
@@ -44,6 +47,13 @@ const overviewFixture: DashboardOverview = {
       mastered: false,
       attempts: 0,
       lastAttemptAt: null,
+      prerequisites: [
+        { conceptId: 6, slug: "trees", name: "Trees", mastered: false },
+        { conceptId: 4, slug: "queues", name: "Queues", mastered: false },
+      ],
+      locked: true,
+      lockReason:
+        "Locked — Graphs requires Trees (not assessed yet) and Queues (not assessed yet).",
     },
   ],
   totalAttempts: 3,
@@ -114,6 +124,18 @@ const quizResultFixture: QuizResult = {
   quizScorePercent: 67,
   correctCount: 4,
   totalQuestions: 6,
+  review: [
+    {
+      questionId: 11,
+      stem: "What is the index of the first element of an array?",
+      difficulty: "easy",
+      isCorrect: false,
+      selectedOptionText: "1",
+      correctOptionText: "0",
+      explanation:
+        "Indexes count the offset from the start of the array; the first element is zero steps from the start.",
+    },
+  ],
   mastery: {
     updated: true,
     oldPercent: 52,

@@ -11,11 +11,20 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 export class ApiError extends Error {
   status: number;
   details?: Record<string, string[] | undefined>;
+  // Set on 403s from the quiz gate: the graph-derived explanation of why the
+  // quiz is locked, shown to the student verbatim.
+  lockReason?: string;
 
-  constructor(status: number, message: string, details?: ApiError["details"]) {
+  constructor(
+    status: number,
+    message: string,
+    details?: ApiError["details"],
+    lockReason?: string
+  ) {
     super(message);
     this.status = status;
     this.details = details;
+    this.lockReason = lockReason;
   }
 }
 
@@ -45,18 +54,20 @@ export async function request<T>(
   });
 
   if (!res.ok) {
-    // The API's error shape is { error: string, details?: fieldErrors }.
+    // The API's error shape is { error: string, details?, lockReason? }.
     let message = `Request failed (${res.status})`;
     let details: ApiError["details"];
+    let lockReason: string | undefined;
     try {
       const body = await res.json();
       if (body?.error) message = body.error;
       details = body?.details;
+      lockReason = body?.lockReason;
     } catch {
       // Non-JSON error body: keep the generic message.
     }
     if (res.status === 401) onUnauthorized?.();
-    throw new ApiError(res.status, message, details);
+    throw new ApiError(res.status, message, details, lockReason);
   }
 
   return res.json() as Promise<T>;

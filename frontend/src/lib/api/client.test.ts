@@ -60,4 +60,15 @@ describe("api client", () => {
     await expect(request("/auth/register", { method: "POST", body: {} }))
       .rejects.toMatchObject({ status: 409, message: "Email already registered" });
   });
+
+  it("carries the quiz gate's lockReason through a 403", async () => {
+    const lockReason = "Locked — Linked Lists requires Arrays (currently 38%).";
+    mockFetchOnce(403, { error: "Quiz locked", lockReason });
+
+    await expect(request("/quiz/2")).rejects.toMatchObject({
+      status: 403,
+      message: "Quiz locked",
+      lockReason,
+    });
+  });
 });

@@ -25,6 +25,13 @@ export interface AuthResult {
 
 // --- dashboard ---
 
+export interface ConceptPrerequisiteRef {
+  conceptId: number;
+  slug: string;
+  name: string;
+  mastered: boolean;
+}
+
 export interface OverviewConcept {
   conceptId: number;
   slug: string;
@@ -35,6 +42,11 @@ export interface OverviewConcept {
   mastered: boolean;
   attempts: number;
   lastAttemptAt: string | null;
+  prerequisites: ConceptPrerequisiteRef[];
+  // Quiz gate (lessons are never locked): locked until every direct
+  // prerequisite is mastered; lockReason is the graph-derived explanation.
+  locked: boolean;
+  lockReason: string | null;
 }
 
 export interface DashboardOverview {
@@ -124,6 +136,17 @@ export interface SubmitAnswer {
   timeTakenSeconds?: number;
 }
 
+// Per-question feedback on a graded attempt.
+export interface QuizReviewItem {
+  questionId: number;
+  stem: string;
+  difficulty: string;
+  isCorrect: boolean;
+  selectedOptionText: string | null;
+  correctOptionText: string;
+  explanation: string | null;
+}
+
 // Note: quizScorePercent (this attempt's score) and mastery percentages are
 // DIFFERENT numbers and must stay separate in the UI as well.
 export interface QuizResult {
@@ -131,6 +154,7 @@ export interface QuizResult {
   quizScorePercent: number;
   correctCount: number;
   totalQuestions: number;
+  review: QuizReviewItem[];
   mastery: {
     updated: boolean;
     oldPercent: number;
