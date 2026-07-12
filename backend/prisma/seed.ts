@@ -37,6 +37,7 @@ interface QuestionBank {
       difficulty: string;
       marks: number;
       text: string;
+      explanation?: string;
       options: string[];
       correctIndex: number;
     }[];
@@ -110,19 +111,29 @@ async function seedContent(idBySlug: Map<string, number>) {
     }
     lessonsSeeded++;
 
-    // Questions (single-correct MCQ, 4 options, 1 mark).
+    // Questions (single-correct MCQ, 4 options, 1 mark). Existing questions
+    // (matched by stem) get their explanation refreshed; new ones are created.
     for (const q of c.questions) {
       const exists = await prisma.question.findFirst({
         where: { conceptId, stem: q.text },
-        select: { id: true },
+        select: { id: true, explanation: true },
       });
-      if (exists) continue;
+      if (exists) {
+        if (exists.explanation !== (q.explanation ?? null)) {
+          await prisma.question.update({
+            where: { id: exists.id },
+            data: { explanation: q.explanation ?? null },
+          });
+        }
+        continue;
+      }
 
       await prisma.question.create({
         data: {
           conceptId,
           difficulty: q.difficulty,
           stem: q.text,
+          explanation: q.explanation ?? null,
           marks: q.marks,
           options: {
             create: q.options.map((text, i) => ({
