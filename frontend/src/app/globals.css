@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Light-only theme (dark mode is out of scope per the step-9 brief).
+   Slate neutrals + indigo primary; bands keep their semantic colors.
+   color-scheme is pinned to light so an OS dark preference or the browser's
+   auto-dark feature can never repaint the canvas dark under light-styled
+   components. */
+:root {
+  color-scheme: light;
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #0f172a; /* slate-900 */
+}
+
+html {
+  background: var(--background);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Visible keyboard focus everywhere (accessibility: focus-states). */
+:focus-visible {
+  outline: 2px solid #4f46e5; /* indigo-600 */
+  outline-offset: 2px;
+}
