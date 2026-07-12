@@ -2,6 +2,7 @@ import { prisma } from "../config/prisma";
 import { ELO, QUESTION_DIFFICULTY } from "./adaptive/mastery";
 import { recordConceptMastery } from "./adaptive/mastery.service";
 import { generateRecommendation } from "./adaptive/recommendation.service";
+import { assertQuizUnlocked } from "./adaptive/gating.service";
 import { HttpError } from "../utils/httpError";
 import type { SubmitInput } from "../validators/quiz.validator";
 
@@ -111,6 +112,11 @@ export async function serveQuiz(studentId: number, conceptId: number) {
   });
   if (!concept) throw new HttpError(404, "Concept not found");
 
+  // Prerequisite gate (approved Option B): assessment is blocked until every
+  // direct prerequisite is mastered. Lessons stay open; this is the API-side
+  // enforcement — the UI lock is only the polite surface.
+  await assertQuizUnlocked(studentId, concept);
+
   const band = await currentBand(studentId, conceptId);
 
   const questions = await prisma.question.findMany({
@@ -153,6 +159,10 @@ export async function submitQuiz(
   });
   if (!concept) throw new HttpError(404, "Concept not found");
 
+  // Same gate as serving: without this, posting answers directly would bypass
+  // the lock and record an attempt on a concept whose prerequisites are unmet.
+  await assertQuizUnlocked(studentId, concept);
+
   const questionIds = answers.map((a) => a.questionId);
   if (new Set(questionIds).size !== questionIds.length) {
     throw new HttpError(400, "Duplicate question in answers");
@@ -160,7 +170,8 @@ export async function submitQuiz(
 
   const questions = await prisma.question.findMany({
     where: { id: { in: questionIds }, conceptId },
-    include: { options: { select: { id: true, isCorrect: true } } },
+    include: { options: { select: { id: true, text: true, isCorrect: true } } },
+    // explanation rides along via include's default scalar selection
   });
   if (questions.length !== questionIds.length) {
     throw new HttpError(400, "One or more questions do not belong to this concept");
@@ -177,19 +188,32 @@ export async function submitQuiz(
     timeTakenSeconds: number | null;
   }[] = [];
   const gradedAnswers: { questionDifficulty: number; correct: boolean }[] = [];
+  // Per-question feedback returned to the student (formative assessment):
+  // what they picked, whether it was right, and the correct answer if not.
+  const review: {
+    questionId: number;
+    stem: string;
+    difficulty: string;
+    isCorrect: boolean;
+    selectedOptionText: string | null;
+    correctOptionText: string;
+    explanation: string | null;
+  }[] = [];
   let correctCount = 0;
 
   for (const answer of answers) {
     const question = questionById.get(answer.questionId)!;
     const selectedOptionId = answer.selectedOptionId ?? null;
 
-    if (selectedOptionId !== null && !question.options.some((o) => o.id === selectedOptionId)) {
+    const selectedOption =
+      selectedOptionId !== null
+        ? question.options.find((o) => o.id === selectedOptionId)
+        : undefined;
+    if (selectedOptionId !== null && !selectedOption) {
       throw new HttpError(400, "Selected option does not belong to its question");
     }
 
-    const isCorrect =
-      selectedOptionId !== null &&
-      question.options.some((o) => o.id === selectedOptionId && o.isCorrect);
+    const isCorrect = selectedOption?.isCorrect ?? false;
     if (isCorrect) correctCount++;
 
     responsesData.push({
@@ -199,6 +223,15 @@ export async function submitQuiz(
       timeTakenSeconds: answer.timeTakenSeconds ?? null,
     });
     gradedAnswers.push({ questionDifficulty: difficultyRating(question.difficulty), correct: isCorrect });
+    review.push({
+      questionId: question.id,
+      stem: question.stem,
+      difficulty: question.difficulty,
+      isCorrect,
+      selectedOptionText: selectedOption?.text ?? null,
+      correctOptionText: question.options.find((o) => o.isCorrect)!.text,
+      explanation: question.explanation,
+    });
   }
 
   const total = answers.length;
@@ -233,6 +266,7 @@ export async function submitQuiz(
     quizScorePercent,
     correctCount,
     totalQuestions: total,
+    review,
     mastery: {
       updated: mastery.updated,
       oldPercent: mastery.oldPercent,

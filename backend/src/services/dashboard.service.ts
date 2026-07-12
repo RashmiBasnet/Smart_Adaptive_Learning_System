@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma";
 import { ELO, isMastered, masteryPercent } from "./adaptive/mastery";
 import { bandForRating } from "./quiz.service";
+import { prerequisiteState, deriveLockState } from "./adaptive/gating";
 import { getLatestRecommendation } from "./adaptive/recommendation.service";
 import { HttpError } from "../utils/httpError";
 
@@ -24,6 +25,11 @@ interface AttemptStats {
   lastAttemptAt: Date | null;
 }
 
+interface PrerequisiteEdge {
+  conceptId: number;
+  prerequisiteId: number;
+}
+
 export interface OverviewConcept {
   conceptId: number;
   slug: string;
@@ -34,21 +40,36 @@ export interface OverviewConcept {
   mastered: boolean;
   attempts: number;
   lastAttemptAt: Date | null;
+  prerequisites: { conceptId: number; slug: string; name: string; mastered: boolean }[];
+  locked: boolean;
+  lockReason: string | null;
 }
 
 // One entry per concept; concepts without a mastery row get cold-start values
-// (rating 1200 → medium band, 0 attempts) so the client always sees every concept.
+// (rating 1200 → medium band, 0 attempts) so the client always sees every
+// concept. Lock state is derived through the gating engine so the reasons here
+// are identical to the ones the quiz gate returns.
 export function buildOverviewConcepts(
   concepts: ConceptRow[],
   masteryRows: MasteryRow[],
-  attemptStats: AttemptStats[]
+  attemptStats: AttemptStats[],
+  edges: PrerequisiteEdge[]
 ): OverviewConcept[] {
   const ratingByConceptId = new Map(masteryRows.map((m) => [m.conceptId, m.masteryScore]));
   const statsByConceptId = new Map(attemptStats.map((s) => [s.conceptId, s]));
+  const conceptById = new Map(concepts.map((c) => [c.id, c]));
 
   return concepts.map((c) => {
     const rating = ratingByConceptId.get(c.id) ?? ELO.COLD_START_RATING;
     const stats = statsByConceptId.get(c.id);
+
+    const prereqStates = edges
+      .filter((e) => e.conceptId === c.id)
+      .map((e) => conceptById.get(e.prerequisiteId))
+      .filter((p): p is ConceptRow => p !== undefined)
+      .map((p) => prerequisiteState(p, ratingByConceptId.get(p.id) ?? null));
+    const { locked, lockReason } = deriveLockState(c.title, prereqStates);
+
     return {
       conceptId: c.id,
       slug: c.slug,
@@ -59,6 +80,14 @@ export function buildOverviewConcepts(
       mastered: isMastered(rating),
       attempts: stats?.attempts ?? 0,
       lastAttemptAt: stats?.lastAttemptAt ?? null,
+      prerequisites: prereqStates.map((p) => ({
+        conceptId: p.conceptId,
+        slug: p.slug,
+        name: p.name,
+        mastered: p.mastered,
+      })),
+      locked,
+      lockReason,
     };
   });
 }
@@ -93,7 +122,7 @@ export function buildHistoryPoints(
 
 // GET /dashboard/overview
 export async function getOverview(studentId: number) {
-  const [student, concepts, masteryRows, attemptGroups] = await Promise.all([
+  const [student, concepts, masteryRows, attemptGroups, edges] = await Promise.all([
     prisma.student.findUnique({
       where: { id: studentId },
       select: { id: true, name: true },
@@ -112,6 +141,9 @@ export async function getOverview(studentId: number) {
       _count: { _all: true },
       _max: { completedAt: true },
     }),
+    prisma.conceptPrerequisite.findMany({
+      select: { conceptId: true, prerequisiteId: true },
+    }),
   ]);
   if (!student) throw new HttpError(404, "Student not found");
 
@@ -121,7 +153,7 @@ export async function getOverview(studentId: number) {
     lastAttemptAt: g._max.completedAt,
   }));
 
-  const overviewConcepts = buildOverviewConcepts(concepts, masteryRows, attemptStats);
+  const overviewConcepts = buildOverviewConcepts(concepts, masteryRows, attemptStats, edges);
 
   return {
     student,

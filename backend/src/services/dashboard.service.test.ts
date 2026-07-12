@@ -23,7 +23,7 @@ test("overview covers all concepts with cold-start defaults for unattempted", ()
   const masteryRows = [{ conceptId: 1, masteryScore: 1350 }];
   const attemptStats = [{ conceptId: 1, attempts: 4, lastAttemptAt: new Date() }];
 
-  const overview = buildOverviewConcepts(concepts, masteryRows, attemptStats);
+  const overview = buildOverviewConcepts(concepts, masteryRows, attemptStats, []);
   assert.equal(overview.length, 7);
 
   const attempted = overview.find((c) => c.conceptId === 1)!;
@@ -56,7 +56,7 @@ test("strengths exclude medium and zero-attempt concepts", () => {
     { conceptId: 3, attempts: 3, lastAttemptAt: new Date() },
   ];
 
-  const overview = buildOverviewConcepts(concepts, masteryRows, attemptStats);
+  const overview = buildOverviewConcepts(concepts, masteryRows, attemptStats, []);
   const { weak, strong } = buildStrengths(overview);
 
   assert.deepEqual(weak.map((c) => c.conceptId), [1]); // 4 excluded: no attempts
@@ -89,7 +89,7 @@ test("mastered flag anchors to the single unlock threshold", () => {
     { conceptId: 1, masteryScore: ELO.MASTERY_UNLOCK_RATING }, // exactly at
     { conceptId: 2, masteryScore: ELO.MASTERY_UNLOCK_RATING - 1 }, // just below
   ];
-  const overview = buildOverviewConcepts(concepts, masteryRows, []);
+  const overview = buildOverviewConcepts(concepts, masteryRows, [], []);
   assert.equal(overview.find((c) => c.conceptId === 1)!.mastered, true);
   assert.equal(overview.find((c) => c.conceptId === 2)!.mastered, false);
   assert.equal(overview.filter((c) => c.mastered).length, 1);
@@ -100,8 +100,44 @@ test("strength entries carry the raw rating", () => {
   const overview: OverviewConcept[] = buildOverviewConcepts(
     concepts,
     [{ conceptId: 1, masteryScore: 1350.5 }],
-    [{ conceptId: 1, attempts: 1, lastAttemptAt: new Date() }]
+    [{ conceptId: 1, attempts: 1, lastAttemptAt: new Date() }],
+    []
   );
   const { strong } = buildStrengths(overview);
   assert.equal(strong[0].rating, 1350.5);
+});
+
+// 6. Lock state wiring: prerequisites, locked flag, and the reason are derived
+//    from the graph edges through the gating engine.
+test("overview derives lock state from the prerequisite graph", () => {
+  const edges = [
+    { conceptId: 2, prerequisiteId: 1 }, // linked-lists depends on arrays
+    { conceptId: 7, prerequisiteId: 6 }, // graphs depends on trees
+    { conceptId: 7, prerequisiteId: 4 }, // graphs depends on queues
+  ];
+  const masteryRows = [
+    { conceptId: 1, masteryScore: 1350 }, // arrays mastered
+    { conceptId: 6, masteryScore: 1250 }, // trees not mastered
+  ];
+
+  const overview = buildOverviewConcepts(concepts, masteryRows, [], edges);
+  const byId = new Map(overview.map((c) => [c.conceptId, c]));
+
+  // Root concept: no prerequisites, never locked.
+  assert.equal(byId.get(1)!.locked, false);
+  assert.deepEqual(byId.get(1)!.prerequisites, []);
+  assert.equal(byId.get(1)!.lockReason, null);
+
+  // Mastered prerequisite unlocks the dependent.
+  assert.equal(byId.get(2)!.locked, false);
+  assert.deepEqual(byId.get(2)!.prerequisites, [
+    { conceptId: 1, slug: "arrays", name: "Arrays", mastered: true },
+  ]);
+
+  // Any unmet prerequisite locks; the reason lists all unmet ones.
+  const graphs = byId.get(7)!;
+  assert.equal(graphs.locked, true);
+  assert.match(graphs.lockReason!, /^Locked — Graphs requires /);
+  assert.match(graphs.lockReason!, /Trees \(currently \d+%\)/);
+  assert.match(graphs.lockReason!, /Queues \(not assessed yet\)/);
 });
