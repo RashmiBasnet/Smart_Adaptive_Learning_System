@@ -258,7 +258,7 @@ export async function submitQuiz(
     attemptId: attempt.id,
     answers: gradedAnswers,
   });
-  const recommendation = await generateRecommendation(studentId, attempt.id);
+  const recommendation = await generateRecommendation(studentId, attempt.id, conceptId);
 
   return {
     attemptId: attempt.id,
