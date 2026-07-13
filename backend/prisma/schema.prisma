@@ -103,6 +103,10 @@ model Question {
   stem        String
   explanation String?
   marks       Int     @default(1)
+  // Held-out evaluation questions: never served in practice quizzes, never
+  // reveal explanations, and never feed mastery. Used only by the /eval
+  // pre/post instrument. Defaults false so all existing questions stay practice.
+  heldOut     Boolean @default(false) @map("held_out")
 
   concept   Concept            @relation(fields: [conceptId], references: [id], onDelete: Cascade)
   options   QuestionOption[]

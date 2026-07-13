@@ -48,7 +48,8 @@
             "two separate halves"
           ],
           "correctIndex": 0,
-          "explanation": "Contiguous memory is the defining property of an array — it's what lets the computer compute any element's address directly instead of searching for it."
+          "explanation": "Contiguous memory is the defining property of an array — it's what lets the computer compute any element's address directly instead of searching for it.",
+          "heldOut": true
         },
         {
           "difficulty": "easy",
@@ -113,7 +114,8 @@
             "[10,30,40,40]"
           ],
           "correctIndex": 0,
-          "explanation": "Deleting 20 (index 1) leaves no gap: 30 and 40 each shift one place left, giving [10,30,40]."
+          "explanation": "Deleting 20 (index 1) leaves no gap: 30 and 40 each shift one place left, giving [10,30,40].",
+          "heldOut": true
         },
         {
           "difficulty": "medium",
@@ -178,7 +180,8 @@
             "Arrays can't be traversed"
           ],
           "correctIndex": 0,
-          "explanation": "The workload hits the array's weakness (O(n) shifting on every front operation) while never using its strength (O(1) reads) — the trade-off runs entirely against it."
+          "explanation": "The workload hits the array's weakness (O(n) shifting on every front operation) while never using its strength (O(1) reads) — the trade-off runs entirely against it.",
+          "heldOut": true
         },
         {
           "difficulty": "hard",
@@ -253,7 +256,8 @@
             "the whole list"
           ],
           "correctIndex": 0,
-          "explanation": "The pointer to the next node is what forms the chain — without it there is no way to get from one node to the next."
+          "explanation": "The pointer to the next node is what forms the chain — without it there is no way to get from one node to the next.",
+          "heldOut": true
         },
         {
           "difficulty": "easy",
@@ -318,7 +322,8 @@
             "A→B→C→X"
           ],
           "correctIndex": 0,
-          "explanation": "Point A at X and X at B — two pointer changes — and the chain reads A→X→B→C."
+          "explanation": "Point A at X and X at B — two pointer changes — and the chain reads A→X→B→C.",
+          "heldOut": true
         },
         {
           "difficulty": "medium",
@@ -383,7 +388,8 @@
             "Pointers are slower than indexes to read"
           ],
           "correctIndex": 0,
-          "explanation": "O(1) indexing requires computing an element's address from its position; scattered nodes have no such formula, so the only route is pointer-by-pointer from the head."
+          "explanation": "O(1) indexing requires computing an element's address from its position; scattered nodes have no such formula, so the only route is pointer-by-pointer from the head.",
+          "heldOut": true
         },
         {
           "difficulty": "hard",
@@ -458,7 +464,8 @@
             "Random order"
           ],
           "correctIndex": 0,
-          "explanation": "A stack only operates at the top, so whatever was pushed last sits on top and leaves first — Last In, First Out."
+          "explanation": "A stack only operates at the top, so whatever was pushed last sits on top and leaves first — Last In, First Out.",
+          "heldOut": true
         },
         {
           "difficulty": "easy",
@@ -523,7 +530,8 @@
             "nothing"
           ],
           "correctIndex": 0,
-          "explanation": "After pushing 1, 2, 3 the top is 3, and pop always removes the top."
+          "explanation": "After pushing 1, 2, 3 the top is 3, and pop always removes the top.",
+          "heldOut": true
         },
         {
           "difficulty": "medium",
@@ -588,7 +596,8 @@
             "Stacks store actions in random order"
           ],
           "correctIndex": 0,
-          "explanation": "Undo must reverse the latest action first — the most recently pushed item is exactly what pop returns."
+          "explanation": "Undo must reverse the latest action first — the most recently pushed item is exactly what pop returns.",
+          "heldOut": true
         },
         {
           "difficulty": "hard",
@@ -663,7 +672,8 @@
             "Random order"
           ],
           "correctIndex": 0,
-          "explanation": "A queue adds at the back and removes at the front, so the element waiting longest leaves first — First In, First Out."
+          "explanation": "A queue adds at the back and removes at the front, so the element waiting longest leaves first — First In, First Out.",
+          "heldOut": true
         },
         {
           "difficulty": "easy",
@@ -728,7 +738,8 @@
             "nothing"
           ],
           "correctIndex": 0,
-          "explanation": "1 entered first, so 1 leaves first — dequeue always returns the front."
+          "explanation": "1 entered first, so 1 leaves first — dequeue always returns the front.",
+          "heldOut": true
         },
         {
           "difficulty": "medium",
@@ -793,7 +804,8 @@
             "To make enqueue O(n)"
           ],
           "correctIndex": 0,
-          "explanation": "Dequeuing from a plain array strands the freed front slots; the circular layout wraps the back around to reuse them — that reuse is its entire purpose."
+          "explanation": "Dequeuing from a plain array strands the freed front slots; the circular layout wraps the back around to reuse them — that reuse is its entire purpose.",
+          "heldOut": true
         },
         {
           "difficulty": "hard",
@@ -869,7 +881,8 @@
             "tree node"
           ],
           "correctIndex": 0,
-          "explanation": "The hash function's whole job is turning a key into a slot number — the bucket where the value lives."
+          "explanation": "The hash function's whole job is turning a key into a slot number — the bucket where the value lives.",
+          "heldOut": true
         },
         {
           "difficulty": "easy",
@@ -934,7 +947,8 @@
             "ignoring the new key"
           ],
           "correctIndex": 0,
-          "explanation": "Chaining gives each bucket a little list; colliding items are appended there and lookups scan only that list."
+          "explanation": "Chaining gives each bucket a little list; colliding items are appended there and lookups scan only that list.",
+          "heldOut": true
         },
         {
           "difficulty": "medium",
@@ -999,7 +1013,8 @@
             "Starting the index at 0"
           ],
           "correctIndex": 0,
-          "explanation": "O(1) assumes keys spread across buckets; when many keys pile into one bucket, lookup becomes a scan of that pile — effectively a list search, O(n)."
+          "explanation": "O(1) assumes keys spread across buckets; when many keys pile into one bucket, lookup becomes a scan of that pile — effectively a list search, O(n).",
+          "heldOut": true
         },
         {
           "difficulty": "hard",
@@ -1074,7 +1089,8 @@
             "branch"
           ],
           "correctIndex": 0,
-          "explanation": "The root is the single topmost node — the entry point every tree operation starts from."
+          "explanation": "The root is the single topmost node — the entry point every tree operation starts from.",
+          "heldOut": true
         },
         {
           "difficulty": "easy",
@@ -1139,7 +1155,8 @@
             "parent"
           ],
           "correctIndex": 0,
-          "explanation": "3 < 5, and smaller values go left, so 3 becomes the left child of 5."
+          "explanation": "3 < 5, and smaller values go left, so 3 becomes the left child of 5.",
+          "heldOut": true
         },
         {
           "difficulty": "medium",
@@ -1204,7 +1221,8 @@
             "Empty"
           ],
           "correctIndex": 0,
-          "explanation": "Sorted inserts always go the same direction, producing one long chain — a skewed tree whose height is n, making search O(n) like a list."
+          "explanation": "Sorted inserts always go the same direction, producing one long chain — a skewed tree whose height is n, making search O(n) like a list.",
+          "heldOut": true
         },
         {
           "difficulty": "hard",
@@ -1281,7 +1299,8 @@
             "indexes"
           ],
           "correctIndex": 0,
-          "explanation": "Vertices are the nodes; edges are the connections joining them — the two ingredients of every graph."
+          "explanation": "Vertices are the nodes; edges are the connections joining them — the two ingredients of every graph.",
+          "heldOut": true
         },
         {
           "difficulty": "easy",
@@ -1346,7 +1365,8 @@
             "root"
           ],
           "correctIndex": 0,
-          "explanation": "A cycle is a path that closes on itself — starting and ending at the same vertex."
+          "explanation": "A cycle is a path that closes on itself — starting and ending at the same vertex.",
+          "heldOut": true
         },
         {
           "difficulty": "medium",
@@ -1411,7 +1431,8 @@
             "The list checks any edge in O(1)"
           ],
           "correctIndex": 0,
-          "explanation": "A sparse graph's matrix is almost entirely 'no edge' cells that still occupy O(n²) space; the list stores only the edges that exist."
+          "explanation": "A sparse graph's matrix is almost entirely 'no edge' cells that still occupy O(n²) space; the list stores only the edges that exist.",
+          "heldOut": true
         },
         {
           "difficulty": "hard",

@@ -119,8 +119,11 @@ export async function serveQuiz(studentId: number, conceptId: number) {
 
   const band = await currentBand(studentId, conceptId);
 
+  // Held-out questions are the evaluation instrument — they must never enter a
+  // practice quiz, or memorising them would inflate mastery and contaminate the
+  // study. This filter is the single line that enforces that; keep it.
   const questions = await prisma.question.findMany({
-    where: { conceptId },
+    where: { conceptId, heldOut: false },
     select: {
       id: true,
       difficulty: true,
@@ -168,8 +171,11 @@ export async function submitQuiz(
     throw new HttpError(400, "Duplicate question in answers");
   }
 
+  // heldOut: false mirrors the serve filter — a served practice quiz never
+  // contains held-out questions, so any submitted held-out id is rejected here
+  // rather than being allowed to feed the Elo mastery update.
   const questions = await prisma.question.findMany({
-    where: { id: { in: questionIds }, conceptId },
+    where: { id: { in: questionIds }, conceptId, heldOut: false },
     include: { options: { select: { id: true, text: true, isCorrect: true } } },
     // explanation rides along via include's default scalar selection
   });

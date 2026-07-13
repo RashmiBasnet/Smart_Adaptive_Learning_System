@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes";
 import quizRoutes from "./routes/quiz.routes";
 import conceptRoutes from "./routes/concept.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import evalRoutes from "./routes/eval.routes";
 
 export const app = express();
 
@@ -20,5 +21,6 @@ app.use("/auth", authRoutes);
 app.use("/quiz", quizRoutes);
 app.use("/concepts", conceptRoutes);
 app.use("/dashboard", dashboardRoutes);
+app.use("/eval", evalRoutes);
 
 app.use(errorHandler);

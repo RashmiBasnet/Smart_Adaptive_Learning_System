@@ -40,6 +40,7 @@ interface QuestionBank {
       explanation?: string;
       options: string[];
       correctIndex: number;
+      heldOut?: boolean; // evaluation-only questions; absent = practice pool
     }[];
   }[];
 }
@@ -112,17 +113,23 @@ async function seedContent(idBySlug: Map<string, number>) {
     lessonsSeeded++;
 
     // Questions (single-correct MCQ, 4 options, 1 mark). Existing questions
-    // (matched by stem) get their explanation refreshed; new ones are created.
+    // (matched by stem) get their explanation and held-out flag refreshed to
+    // match the bank; new ones are created. Re-seeding only updates flags — it
+    // never duplicates a question or touches recorded responses.
     for (const q of c.questions) {
+      const heldOut = q.heldOut ?? false;
       const exists = await prisma.question.findFirst({
         where: { conceptId, stem: q.text },
-        select: { id: true, explanation: true },
+        select: { id: true, explanation: true, heldOut: true },
       });
       if (exists) {
-        if (exists.explanation !== (q.explanation ?? null)) {
+        if (
+          exists.explanation !== (q.explanation ?? null) ||
+          exists.heldOut !== heldOut
+        ) {
           await prisma.question.update({
             where: { id: exists.id },
-            data: { explanation: q.explanation ?? null },
+            data: { explanation: q.explanation ?? null, heldOut },
           });
         }
         continue;
@@ -135,6 +142,7 @@ async function seedContent(idBySlug: Map<string, number>) {
           stem: q.text,
           explanation: q.explanation ?? null,
           marks: q.marks,
+          heldOut,
           options: {
             create: q.options.map((text, i) => ({
               text,
