@@ -17,10 +17,10 @@ export function QuizQuestion({
   onSelect: (optionId: number) => void;
 }) {
   return (
-    <fieldset className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <fieldset className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-sm sm:p-6">
       <legend className="sr-only">Question {index + 1}</legend>
-      <p className="flex gap-3 font-medium text-slate-900">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-sm font-semibold text-indigo-700">
+      <p className="flex gap-3 font-medium text-[var(--ink)]">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-2)] font-mono text-sm font-semibold text-[var(--prussian)]">
           {index + 1}
         </span>
         <span className="pt-0.5">{question.stem}</span>
@@ -33,8 +33,8 @@ export function QuizQuestion({
               key={option.id}
               className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 text-sm transition-colors duration-150 ${
                 selected
-                  ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500"
-                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                  ? "border-[var(--prussian)] bg-[var(--prussian-tint)] ring-1 ring-[var(--prussian)]"
+                  : "border-[var(--line)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)]"
               }`}
             >
               <input
@@ -46,13 +46,15 @@ export function QuizQuestion({
               />
               <span
                 aria-hidden="true"
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold transition-colors duration-150 ${
-                  selected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600"
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md font-mono text-xs font-semibold transition-colors duration-150 ${
+                  selected
+                    ? "bg-[var(--prussian)] text-white"
+                    : "bg-[var(--sunk)] text-[var(--ink-soft)]"
                 }`}
               >
                 {OPTION_LETTERS[i] ?? "•"}
               </span>
-              <span className={selected ? "font-medium text-slate-900" : "text-slate-700"}>
+              <span className={selected ? "font-medium text-[var(--ink)]" : "text-[var(--ink-soft)]"}>
                 {option.text}
               </span>
             </label>

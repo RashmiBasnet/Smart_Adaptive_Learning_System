@@ -66,7 +66,7 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
   });
 
   if (quiz.isLoading) {
-    return <p className="py-12 text-center text-slate-500">Preparing your quiz…</p>;
+    return <p className="py-12 text-center text-[var(--ink-soft)]">Preparing your quiz…</p>;
   }
   if (quiz.isError || !shuffledQuiz) {
     // A 403 from the quiz gate carries the graph-derived lock reason —
@@ -75,14 +75,14 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
       quiz.error instanceof ApiError ? quiz.error.lockReason : undefined;
     if (lockReason) {
       return (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <p className="font-semibold text-slate-800">Quiz locked</p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">{lockReason}</p>
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-5">
+          <p className="font-semibold text-[var(--ink)]">Quiz locked</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--ink-soft)]">{lockReason}</p>
         </div>
       );
     }
     return (
-      <p className="py-12 text-center text-rose-600">Couldn&apos;t load the quiz.</p>
+      <p className="py-12 text-center text-[var(--band-weak)]">Couldn&apos;t load the quiz.</p>
     );
   }
 
@@ -95,18 +95,18 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Progress: answered count + bar */}
-      <div className="sticky top-14 z-10 -mx-1 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
+      <div className="sticky top-14 z-10 -mx-1 rounded-xl border border-[var(--line)] bg-[var(--surface)]/95 px-4 py-3 shadow-sm backdrop-blur">
         <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-slate-700">
+          <span className="font-medium text-[var(--ink)]">
             {answeredCount} of {questions.length} answered
           </span>
-          <span className="tabular-nums text-slate-500">
+          <span className="font-mono tabular-nums text-[var(--ink-soft)]">
             {Math.round((answeredCount / questions.length) * 100)}%
           </span>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--sunk)]">
           <div
-            className="h-full rounded-full bg-indigo-600 transition-all duration-300"
+            className="h-full rounded-full bg-[var(--prussian)] transition-all duration-300"
             style={{ width: `${(answeredCount / questions.length) * 100}%` }}
           />
         </div>
@@ -132,7 +132,7 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
             }))
           )
         }
-        className="rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="rounded-xl bg-[var(--prussian)] px-5 py-3 font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[var(--prussian-deep)] disabled:cursor-not-allowed disabled:bg-[var(--line-strong)]"
       >
         {submit.isPending
           ? "Submitting…"
@@ -141,7 +141,7 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
             : `Answer ${questions.length - answeredCount} more to submit`}
       </button>
       {submit.isError && (
-        <p className="text-center text-sm text-rose-600">
+        <p className="text-center text-sm text-[var(--band-weak)]">
           Submission failed — try again.
         </p>
       )}
@@ -159,15 +159,15 @@ function QuizResultScreen({ result }: { result: QuizResult }) {
   return (
     <div className="flex flex-col gap-4">
       {/* 1. Quiz score */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-8 text-center shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">
           Quiz score
         </p>
-        <p className="mt-2 text-5xl font-bold tabular-nums tracking-tight text-slate-900">
+        <p className="mt-2 font-mono text-5xl font-bold tabular-nums tracking-tight text-[var(--ink)]">
           {correctCount}
-          <span className="text-2xl font-medium text-slate-400">/{totalQuestions}</span>
+          <span className="text-2xl font-medium text-[var(--ink-faint)]">/{totalQuestions}</span>
         </p>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-[var(--ink-soft)]">
           {correctCount === totalQuestions
             ? "Perfect round!"
             : correctCount >= totalQuestions / 2
@@ -177,70 +177,75 @@ function QuizResultScreen({ result }: { result: QuizResult }) {
       </div>
 
       {/* 2. Mastery change */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">
           Mastery
         </p>
         {mastery.updated ? (
-          <p className="mt-2 flex items-baseline gap-2 text-2xl font-bold tabular-nums text-slate-900">
-            <span className="text-slate-400 line-through decoration-2">
+          <p className="mt-2 flex items-baseline gap-2 font-mono text-2xl font-bold tabular-nums text-[var(--ink)]">
+            <span className="text-[var(--ink-faint)] line-through decoration-2">
               {mastery.oldPercent}%
             </span>
-            <span aria-hidden="true" className={masteryWentUp ? "text-emerald-600" : "text-rose-500"}>
+            <span
+              aria-hidden="true"
+              className={masteryWentUp ? "text-[var(--band-strong)]" : "text-[var(--band-weak)]"}
+            >
               →
             </span>
-            <span className={masteryWentUp ? "text-emerald-600" : "text-rose-500"}>
+            <span className={masteryWentUp ? "text-[var(--band-strong)]" : "text-[var(--band-weak)]"}>
               {mastery.newPercent}%
             </span>
             {mastery.mastered && (
-              <span className="text-sm font-semibold text-emerald-600">✓ mastered</span>
+              <span className="text-sm font-semibold text-[var(--band-strong)]">✓ mastered</span>
             )}
           </p>
         ) : (
-          <p className="mt-2 text-slate-600">
+          <p className="mt-2 text-[var(--ink-soft)]">
             This quiz was too short to update your mastery.
           </p>
         )}
         {mastery.reason && (
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">{mastery.reason}</p>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">{mastery.reason}</p>
         )}
       </div>
 
       {/* Per-question review: what was right, what was wrong, and the correct
           answer where it matters — the feedback that lets a student learn. */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">
           Your answers
         </p>
         <ul className="mt-3 flex flex-col gap-3">
           {review.map((item, i) => (
             <li
               key={item.questionId}
-              className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3.5"
+              className="flex gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3.5"
             >
               <span
                 aria-hidden="true"
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
-                  item.isCorrect ? "bg-emerald-500" : "bg-rose-500"
-                }`}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{ background: item.isCorrect ? "var(--band-strong)" : "var(--band-weak)" }}
               >
                 {item.isCorrect ? "✓" : "✗"}
               </span>
               <div className="min-w-0 text-sm">
-                <p className="font-medium text-slate-900">
+                <p className="font-medium text-[var(--ink)]">
                   {i + 1}. {item.stem}
                 </p>
-                <p className={`mt-1 ${item.isCorrect ? "text-emerald-700" : "text-rose-700"}`}>
+                <p
+                  className="mt-1"
+                  style={{ color: item.isCorrect ? "var(--band-strong)" : "var(--band-weak)" }}
+                >
                   Your answer: {item.selectedOptionText ?? "(not answered)"}
                 </p>
                 {!item.isCorrect && (
-                  <p className="mt-0.5 text-slate-600">
+                  <p className="mt-0.5 text-[var(--ink-soft)]">
                     Correct answer:{" "}
-                    <span className="font-medium text-slate-900">{item.correctOptionText}</span>
+                    <span className="font-medium text-[var(--ink)]">{item.correctOptionText}</span>
                   </p>
                 )}
                 {item.explanation && (
-                  <p className="mt-1.5 border-l-2 border-slate-200 pl-2.5 text-[13px] leading-relaxed text-slate-500">
+                  <p className="mt-1.5 border-l-2 border-[var(--line-strong)] pl-2.5 text-[13px] leading-relaxed text-[var(--ink-soft)]">
                     {item.explanation}
                   </p>
                 )}
@@ -251,18 +256,18 @@ function QuizResultScreen({ result }: { result: QuizResult }) {
       </div>
 
       {/* 3. New recommendation — verbatim persisted reason, prominent. */}
-      <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 p-6 text-white shadow-md">
-        <p className="text-xs font-semibold uppercase tracking-widest text-indigo-200">
+      <div className="rounded-2xl bg-[linear-gradient(158deg,var(--prussian)_0%,var(--prussian-deep)_100%)] p-6 text-white shadow-md">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--brass)]">
           What next
         </p>
-        <p className="mt-2 text-base leading-relaxed text-indigo-50">
+        <p className="mt-2 text-base leading-relaxed text-[#DCE6F1]">
           {recommendation.reason}
         </p>
       </div>
 
       <Link
         href="/dashboard"
-        className="rounded-xl bg-slate-900 px-5 py-3 text-center font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-slate-700"
+        className="rounded-xl bg-[var(--ink)] px-5 py-3 text-center font-semibold text-white shadow-sm transition-colors duration-200 hover:opacity-90"
       >
         Back to dashboard
       </Link>
