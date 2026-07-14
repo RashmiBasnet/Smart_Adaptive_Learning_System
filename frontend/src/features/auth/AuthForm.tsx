@@ -15,7 +15,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8; // matches the API's registration rule
 
 const INPUT_CLASSES =
-  "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition-colors duration-150 focus:border-indigo-500";
+  "w-full rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-3.5 py-2.5 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] shadow-sm transition-colors duration-150 focus:border-[var(--prussian)]";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
@@ -59,44 +59,99 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
-      {/* Brand mark above the card */}
-      <div className="mb-6 flex items-center gap-2.5">
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-600 shadow-md">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6"
-            aria-hidden="true"
-          >
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-          </svg>
-        </span>
-        <div>
-          <p className="text-lg font-bold leading-tight tracking-tight text-slate-900">SALS</p>
-          <p className="text-xs text-slate-500">Smart Adaptive Learning System</p>
+    <div className="flex min-h-screen">
+      {/* Editorial panel — the product's story, over a faint concept-graph
+          motif. Desktop only; on small screens a compact wordmark stands in. */}
+      <aside className="relative hidden w-[44%] overflow-hidden bg-[var(--prussian-deep)] text-white lg:block">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 400 620"
+          preserveAspectRatio="xMidYMid slice"
+          className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.18]"
+        >
+          <g stroke="#ffffff" strokeWidth="1.4" fill="none">
+            <path d="M70 96 L150 210" />
+            <path d="M212 66 L150 210" />
+            <path d="M212 66 L300 182" />
+            <path d="M150 210 L104 372" />
+            <path d="M150 210 L258 350" />
+            <path d="M300 182 L258 350" />
+            <path d="M104 372 L190 512" />
+            <path d="M258 350 L190 512" />
+            <path d="M258 350 L336 486" />
+          </g>
+          <g>
+            <circle cx="70" cy="96" r="9" fill="#C99F55" />
+            <circle cx="212" cy="66" r="9" fill="#ffffff" />
+            <circle cx="300" cy="182" r="9" fill="#ffffff" />
+            <circle cx="150" cy="210" r="11" fill="#C99F55" />
+            <circle cx="104" cy="372" r="9" fill="#ffffff" />
+            <circle cx="258" cy="350" r="9" fill="#ffffff" />
+            <circle cx="190" cy="512" r="9" fill="#ffffff" />
+            <circle cx="336" cy="486" r="8" fill="#ffffff" />
+          </g>
+        </svg>
+
+        <div className="relative z-10 flex h-full flex-col justify-between p-12">
+          <div className="flex items-baseline gap-2.5">
+            <span className="font-serif text-2xl font-bold tracking-tight">SALS</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--brass)]">
+              Smart Adaptive Learning
+            </span>
+          </div>
+
+          <div className="max-w-sm">
+            <h2 className="text-balance font-serif text-[34px] font-bold leading-[1.15] tracking-tight">
+              Learning that shows its reasoning.
+            </h2>
+            <p className="mt-4 text-[15px] leading-relaxed text-[#C6D2E1]">
+              SALS adapts to how you&apos;re doing on data structures — and tells you
+              why, at every step.
+            </p>
+            <ul className="mt-7 flex flex-col gap-3 text-[14px] text-[#DCE6F1]">
+              {[
+                "Every recommendation carries its reason.",
+                "A living map of concepts, not a checklist.",
+                "Adapts to your quiz performance, transparently.",
+              ].map((point) => (
+                <li key={point} className="flex items-start gap-2.5">
+                  <span
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brass)]"
+                    aria-hidden="true"
+                  />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="text-xs text-white/45">Transparent, explainable adaptive learning.</p>
         </div>
-      </div>
+      </aside>
 
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-7 shadow-md">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
-          {mode === "login" ? "Welcome back" : "Create your account"}
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {mode === "login"
-            ? "Log in to continue learning."
-            : "Start learning data structures, adaptively."}
-        </p>
+      {/* Form column */}
+      <main className="flex flex-1 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 lg:hidden">
+            <p className="font-serif text-2xl font-bold tracking-tight text-[var(--ink)]">SALS</p>
+            <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+              Smart Adaptive Learning System
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+          <h1 className="font-serif text-[26px] font-bold tracking-tight text-[var(--ink)]">
+            {mode === "login" ? "Welcome back" : "Create your account"}
+          </h1>
+          <p className="mt-1.5 text-sm text-[var(--ink-soft)]">
+            {mode === "login"
+              ? "Log in to continue learning."
+              : "Start learning data structures, adaptively."}
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-4" noValidate>
           {mode === "register" && (
             <div>
-              <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
                 Name
               </label>
               <input
@@ -111,7 +166,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             </div>
           )}
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
               Email
             </label>
             <input
@@ -125,7 +180,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             />
           </div>
           <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[var(--ink)]">
               Password
             </label>
             <input
@@ -140,7 +195,10 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           </div>
 
           {error && (
-            <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <p
+              role="alert"
+              className="rounded-lg bg-[var(--band-weak-bg)] px-3 py-2 text-sm text-[var(--band-weak)]"
+            >
               {error}
             </p>
           )}
@@ -148,30 +206,31 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           <button
             type="submit"
             disabled={pending}
-            className="mt-1 rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="mt-1 rounded-xl bg-[var(--prussian)] px-4 py-2.5 font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[var(--prussian-deep)] disabled:cursor-not-allowed disabled:bg-[var(--line-strong)]"
           >
             {pending ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
           </button>
-        </form>
-      </div>
+          </form>
 
-      <p className="mt-5 text-center text-sm text-slate-600">
-        {mode === "login" ? (
-          <>
-            No account?{" "}
-            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-700">
-              Register
-            </Link>
-          </>
-        ) : (
-          <>
-            Already registered?{" "}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-700">
-              Log in
-            </Link>
-          </>
-        )}
-      </p>
+          <p className="mt-6 text-sm text-[var(--ink-soft)]">
+            {mode === "login" ? (
+              <>
+                No account?{" "}
+                <Link href="/register" className="font-semibold text-[var(--prussian)] hover:underline">
+                  Register
+                </Link>
+              </>
+            ) : (
+              <>
+                Already registered?{" "}
+                <Link href="/login" className="font-semibold text-[var(--prussian)] hover:underline">
+                  Log in
+                </Link>
+              </>
+            )}
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
