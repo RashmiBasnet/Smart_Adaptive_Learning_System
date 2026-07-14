@@ -15,15 +15,21 @@ import {
 } from "recharts";
 import type { MasteryHistoryPoint } from "../lib/types/api";
 
-export function MasteryChart({ points }: { points: MasteryHistoryPoint[] }) {
+export function MasteryChart({
+  points,
+  height = 240,
+}: {
+  points: MasteryHistoryPoint[];
+  height?: number;
+}) {
   if (points.length < 2) {
     return (
-      <div className="flex flex-col items-center gap-1 py-12 text-center">
-        <p className="text-sm font-medium text-slate-600">
+      <div className="flex flex-col items-center gap-1 py-8 text-center">
+        <p className="text-sm font-medium text-[var(--ink-soft)]">
           Not enough attempts yet to draw a trend.
         </p>
-        <p className="text-xs text-slate-400">
-          Take at least two quizzes on a concept to see your progress curve.
+        <p className="text-xs text-[var(--ink-faint)]">
+          Take at least two quizzes to see your progress curve.
         </p>
       </div>
     );
@@ -38,24 +44,24 @@ export function MasteryChart({ points }: { points: MasteryHistoryPoint[] }) {
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -20 }}>
         <defs>
           <linearGradient id="masteryFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.25} />
-            <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
+            <stop offset="0%" stopColor="#1E3A5F" stopOpacity={0.22} />
+            <stop offset="100%" stopColor="#1E3A5F" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#E1E1DA" vertical={false} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 12, fill: "#64748b" }}
-          axisLine={{ stroke: "#e2e8f0" }}
+          tick={{ fontSize: 12, fill: "#8A8F9C" }}
+          axisLine={{ stroke: "#E1E1DA" }}
           tickLine={false}
         />
         <YAxis
           domain={[0, 100]}
-          tick={{ fontSize: 12, fill: "#64748b" }}
+          tick={{ fontSize: 12, fill: "#8A8F9C" }}
           axisLine={false}
           tickLine={false}
         />
@@ -64,7 +70,7 @@ export function MasteryChart({ points }: { points: MasteryHistoryPoint[] }) {
           labelFormatter={(label) => `Attempt on ${label}`}
           contentStyle={{
             borderRadius: "0.75rem",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #E1E1DA",
             boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
             fontSize: "0.8rem",
           }}
@@ -72,10 +78,10 @@ export function MasteryChart({ points }: { points: MasteryHistoryPoint[] }) {
         <Area
           type="monotone"
           dataKey="masteryPercentAfter"
-          stroke="#4f46e5"
+          stroke="#1E3A5F"
           strokeWidth={2.5}
           fill="url(#masteryFill)"
-          dot={{ r: 3.5, fill: "#4f46e5", strokeWidth: 2, stroke: "#ffffff" }}
+          dot={{ r: 3.5, fill: "#1E3A5F", strokeWidth: 2, stroke: "#ffffff" }}
           activeDot={{ r: 5 }}
         />
       </AreaChart>

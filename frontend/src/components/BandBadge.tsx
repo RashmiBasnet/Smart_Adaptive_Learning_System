@@ -4,27 +4,22 @@
 
 import type { Band } from "../lib/types/api";
 
-const STYLES: Record<Band, { badge: string; dot: string }> = {
-  weak: { badge: "bg-rose-50 text-rose-700 ring-rose-200", dot: "bg-rose-500" },
-  medium: { badge: "bg-amber-50 text-amber-700 ring-amber-200", dot: "bg-amber-500" },
-  strong: { badge: "bg-emerald-50 text-emerald-700 ring-emerald-200", dot: "bg-emerald-500" },
-};
-
-const LABELS: Record<Band, string> = {
-  weak: "Needs work",
-  medium: "In progress",
-  strong: "Strong",
+const TOKENS: Record<Band, { fg: string; bg: string; label: string }> = {
+  weak: { fg: "var(--band-weak)", bg: "var(--band-weak-bg)", label: "Needs work" },
+  medium: { fg: "var(--band-developing)", bg: "var(--band-developing-bg)", label: "Developing" },
+  strong: { fg: "var(--band-strong)", bg: "var(--band-strong-bg)", label: "Strong" },
 };
 
 export function BandBadge({ band }: { band: Band }) {
-  const style = STYLES[band];
+  const { fg, bg, label } = TOKENS[band];
   return (
     <span
       data-band={band}
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${style.badge}`}
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+      style={{ color: fg, background: bg }}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} aria-hidden="true" />
-      {LABELS[band]}
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: fg }} aria-hidden="true" />
+      {label}
     </span>
   );
 }

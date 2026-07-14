@@ -1,14 +1,43 @@
 @import "tailwindcss";
 
-/* Light-only theme (dark mode is out of scope per the step-9 brief).
-   Slate neutrals + indigo primary; bands keep their semantic colors.
-   color-scheme is pinned to light so an OS dark preference or the browser's
-   auto-dark feature can never repaint the canvas dark under light-styled
-   components. */
+/* SALS visual identity — "printed instrument": bookish serif + Prussian-blue
+   ink accent + brass, on cool bone paper. Light-only by approved scope
+   (dark mode is out of scope per the step-9 brief); color-scheme is pinned to
+   light so an OS dark preference can never repaint the canvas underneath the
+   light-styled components. Colours live here as tokens; components reference
+   them via var(--token) so the palette stays in one place. */
 :root {
   color-scheme: light;
-  --background: #f8fafc; /* slate-50 */
-  --foreground: #0f172a; /* slate-900 */
+
+  /* neutrals — bone paper + faint-indigo ink, chosen not defaulted */
+  --paper:        #EEEFEA;
+  --surface:      #FBFBF9;
+  --surface-2:    #F5F5F1;
+  --sunk:         #E7E8E1;
+  --ink:          #1E2230;
+  --ink-soft:     #565C6B;
+  --ink-faint:    #8A8F9C;
+  --line:         #E1E1DA;
+  --line-strong:  #CFD0C7;
+
+  /* accent — Prussian-blue ink + brass (brass is spent sparingly) */
+  --prussian:      #1E3A5F;
+  --prussian-deep: #152B47;
+  --prussian-tint: #E7EDF4;  /* light wash for selected/active surfaces */
+  --brass:         #C99F55;
+  --brass-deep:    #A9833C;
+  --brass-ink:     #6F5626;
+
+  /* semantic mastery bands — textbook-plate earths, kept off the accent.
+     API band weak/medium/strong maps to weak/developing/strong here. */
+  --band-strong:      #3E6B54;  --band-strong-bg:     #E7EEE9;
+  --band-developing:  #A6792B;  --band-developing-bg: #F3ECDB;
+  --band-weak:        #A9503B;  --band-weak-bg:       #F2E4DE;
+
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
 html {
@@ -19,6 +48,7 @@ html {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
+  --font-serif: var(--font-serif);
 }
 
 body {
@@ -29,6 +59,33 @@ body {
 
 /* Visible keyboard focus everywhere (accessibility: focus-states). */
 :focus-visible {
-  outline: 2px solid #4f46e5; /* indigo-600 */
+  outline: 2px solid var(--prussian);
   outline-offset: 2px;
+}
+
+/* Concept-map nodes: SVG can't take an outline reliably, so hover/focus rings
+   are drawn as circles toggled here. */
+.sals-map-node { cursor: pointer; outline: none; }
+.sals-node-hover,
+.sals-node-focus { opacity: 0; transition: opacity 0.15s ease; }
+.sals-map-node:hover .sals-node-hover { opacity: 1; }
+.sals-map-node:focus-visible .sals-node-focus { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sals-node-hover,
+  .sals-node-focus { transition: none; }
+}
+
+/* Concept popup (modal) enter animation. */
+@keyframes sals-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sals-pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.sals-backdrop { animation: sals-fade-in 0.15s ease-out; }
+.sals-dialog { animation: sals-pop-in 0.18s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sals-backdrop,
+  .sals-dialog { animation: none; }
 }

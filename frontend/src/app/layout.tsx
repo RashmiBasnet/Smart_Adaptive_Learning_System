@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
-      <body className="min-h-screen bg-slate-50">
+      <body className="min-h-screen bg-[var(--paper)]">
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
         </QueryProvider>
