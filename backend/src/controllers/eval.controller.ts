@@ -23,6 +23,7 @@ export async function questions(req: Request, res: Response) {
 export async function submit(req: Request, res: Response) {
   const conceptSlug = parseConceptSlug(req);
   const input = evalSubmitSchema.parse(req.body);
-  const result = await gradeHeldOutSubmission(conceptSlug, input.answers);
+  // studentId is attached by requireAuth (same accessor as the quiz controller).
+  const result = await gradeHeldOutSubmission(req.studentId!, conceptSlug, input);
   res.json(result);
 }
