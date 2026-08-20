@@ -13,6 +13,7 @@ import { RequireAuth } from "../../../features/auth/RequireAuth";
 import { NavBar } from "../../../features/shell/NavBar";
 import { useOverview } from "../../../features/dashboard/hooks";
 import { useConceptMaterials } from "../../../features/concepts/hooks";
+import { useStudyMode } from "../../../providers/study-mode-provider";
 import { QuizRunner } from "../../../features/quiz/QuizRunner";
 import { BandBadge } from "../../../components/BandBadge";
 import { LessonContent, extractHeadings } from "../../../components/LessonContent";
@@ -20,6 +21,7 @@ import { LessonContent, extractHeadings } from "../../../components/LessonConten
 function ConceptPageBody() {
   const params = useParams<{ slug: string }>();
   const overview = useOverview();
+  const { opaque } = useStudyMode();
   const [quizStarted, setQuizStarted] = useState(false);
 
   const concept = overview.data?.concepts.find((c) => c.slug === params.slug);
@@ -67,20 +69,28 @@ function ConceptPageBody() {
             {concept.name}
           </h1>
           {/* No band badge before the first quiz — cold-start is a neutral
-              prior, not an assessment (same display rule as ConceptCard). */}
-          {assessed && <BandBadge band={concept.band} />}
+              prior, not an assessment. Hidden entirely in opaque mode (band is
+              a learner-model signal). */}
+          {assessed && !opaque && <BandBadge band={concept.band} />}
         </div>
         <p className="mt-3 text-sm text-[var(--ink-soft)]">
           {assessed ? (
-            <>
-              Mastery:{" "}
-              <span className="font-mono font-semibold tabular-nums text-[var(--ink)]">
-                {concept.masteryPercent}%
-              </span>
-              <span className="ml-2 text-[var(--ink-faint)]">
-                · {concept.attempts} quiz{concept.attempts === 1 ? "" : "zes"} taken
-              </span>
-            </>
+            opaque ? (
+              // Opaque mode: keep raw activity, drop the mastery estimate.
+              <>
+                {concept.attempts} quiz{concept.attempts === 1 ? "" : "zes"} taken
+              </>
+            ) : (
+              <>
+                Mastery:{" "}
+                <span className="font-mono font-semibold tabular-nums text-[var(--ink)]">
+                  {concept.masteryPercent}%
+                </span>
+                <span className="ml-2 text-[var(--ink-faint)]">
+                  · {concept.attempts} quiz{concept.attempts === 1 ? "" : "zes"} taken
+                </span>
+              </>
+            )
           ) : (
             <>Not assessed yet — read the lesson, then take your first quiz.</>
           )}
@@ -113,7 +123,15 @@ function ConceptPageBody() {
               <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)]">
                 This concept
               </p>
-              {assessed ? (
+              {opaque ? (
+                // Opaque mode: no mastery estimate on the panel. The graph facts
+                // (builds on / unlocks) below still render in both modes.
+                <p className="text-[13px] leading-relaxed text-[var(--ink-soft)]">
+                  {assessed
+                    ? "You've taken a quiz on this concept."
+                    : "Not assessed yet — take a quiz when you're ready."}
+                </p>
+              ) : assessed ? (
                 <div className="flex items-baseline justify-between">
                   <span className="text-[13px] text-[var(--ink-soft)]">Mastery</span>
                   <span className="font-mono text-[15px] font-semibold tabular-nums text-[var(--ink)]">
@@ -190,8 +208,12 @@ function ConceptPageBody() {
                 </svg>
                 <div>
                   <p className="font-semibold text-[var(--ink)]">Quiz locked</p>
+                  {/* The lock is enforced in both modes; opaque mode hides the
+                      graph-derived REASON (the learner-model explanation). */}
                   <p className="mt-1 text-sm leading-relaxed text-[var(--ink-soft)]">
-                    {concept.lockReason}
+                    {opaque
+                      ? "This quiz isn't available yet."
+                      : concept.lockReason}
                   </p>
                 </div>
               </div>
