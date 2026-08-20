@@ -62,32 +62,86 @@ test("held-out GET returns only held-out questions and leaks no answer key", asy
   assert.equal(wire.includes("explanation"), false);
 });
 
-test("held-out POST returns a score and creates no attempt or recommendation", async (t) => {
+test("held-out POST persists an inert, item-graded submission", async (t) => {
   const ctx = await context();
   if (!ctx) return t.skip("database unavailable or not seeded with held-out flags");
 
-  // Answer every held-out question correctly to verify grading end-to-end.
   const heldOut = await prisma.question.findMany({
     where: { conceptId: ctx.concept.id, heldOut: true },
     select: { id: true, options: { select: { id: true, isCorrect: true } } },
   });
-  const answers = heldOut.map((q) => ({
-    questionId: q.id,
-    selectedOptionId: q.options.find((o) => o.isCorrect)!.id,
-  }));
 
-  const attemptsBefore = await prisma.quizAttempt.count();
-  const recommendationsBefore = await prisma.recommendation.count();
+  // Answer the first question WRONG (when a wrong option exists) and the rest
+  // correctly, so the test proves per-item grading in both directions.
+  const expectedByQuestion = new Map<number, boolean>();
+  const answers = heldOut.map((q, i) => {
+    const correctOpt = q.options.find((o) => o.isCorrect)!;
+    const wrongOpt = q.options.find((o) => !o.isCorrect);
+    const pick = i === 0 && wrongOpt ? wrongOpt : correctOpt;
+    expectedByQuestion.set(q.id, pick.isCorrect);
+    return { questionId: q.id, selectedOptionId: pick.id };
+  });
+  const expectedCorrect = [...expectedByQuestion.values()].filter(Boolean).length;
 
-  const result = await gradeHeldOutSubmission(SLUG, answers);
+  // A throwaway student to satisfy the submission's FK; removed in cleanup.
+  const student = await prisma.student.create({
+    data: {
+      email: `eval-int-${Date.now()}@example.test`,
+      passwordHash: "x",
+      name: "Eval Integration",
+    },
+  });
 
-  assert.deepEqual(
-    { correct: result.correct, total: result.total },
-    { correct: heldOut.length, total: heldOut.length }
-  );
-  // The eval flow is inert with respect to the adaptive pipeline.
-  assert.equal(await prisma.quizAttempt.count(), attemptsBefore);
-  assert.equal(await prisma.recommendation.count(), recommendationsBefore);
+  // Snapshot the adaptive tables to prove the eval flow writes to none of them.
+  const before = {
+    attempts: await prisma.quizAttempt.count(),
+    mastery: await prisma.conceptMastery.count(),
+    history: await prisma.masteryHistory.count(),
+    recommendations: await prisma.recommendation.count(),
+  };
+
+  try {
+    const result = await gradeHeldOutSubmission(student.id, SLUG, {
+      phase: "PRE",
+      studyMode: "transparent",
+      answers,
+    });
+
+    // (1) Score is correct-out-of-total.
+    assert.equal(result.correct, expectedCorrect);
+    assert.equal(result.total, heldOut.length);
+
+    // Exactly one submission, with the expected fields persisted.
+    const submissions = await prisma.evalSubmission.findMany({
+      where: { studentId: student.id },
+      include: { responses: true },
+    });
+    assert.equal(submissions.length, 1);
+    const sub = submissions[0];
+    assert.equal(sub.id, result.submissionId);
+    assert.equal(sub.conceptId, ctx.concept.id);
+    assert.equal(sub.phase, "PRE");
+    assert.equal(sub.studyMode, "transparent");
+    assert.equal(sub.correct, expectedCorrect);
+    assert.equal(sub.total, heldOut.length);
+
+    // (2) One response per submitted answer; isCorrect matches the held-out key.
+    assert.equal(sub.responses.length, answers.length);
+    for (const r of sub.responses) {
+      assert.equal(r.isCorrect, expectedByQuestion.get(r.questionId));
+    }
+
+    // (3) Inertness: no QuizAttempt / ConceptMastery / MasteryHistory /
+    // Recommendation rows were created. This is the guarantee an examiner probes.
+    assert.equal(await prisma.quizAttempt.count(), before.attempts);
+    assert.equal(await prisma.conceptMastery.count(), before.mastery);
+    assert.equal(await prisma.masteryHistory.count(), before.history);
+    assert.equal(await prisma.recommendation.count(), before.recommendations);
+  } finally {
+    // Cascade removes the submission's responses; then remove the student.
+    await prisma.evalSubmission.deleteMany({ where: { studentId: student.id } });
+    await prisma.student.delete({ where: { id: student.id } });
+  }
 });
 
 test("held-out POST rejects a non-held-out (practice) question", async (t) => {
@@ -100,11 +154,13 @@ test("held-out POST rejects a non-held-out (practice) question", async (t) => {
   });
   assert.ok(practice, "expected a practice question to exist");
 
+  // Rejects before any write, so the sentinel id (no such student) is safe.
   await assert.rejects(
     () =>
-      gradeHeldOutSubmission(SLUG, [
-        { questionId: practice!.id, selectedOptionId: practice!.options[0].id },
-      ]),
+      gradeHeldOutSubmission(FRESH_STUDENT_ID, SLUG, {
+        phase: "PRE",
+        answers: [{ questionId: practice!.id, selectedOptionId: practice!.options[0].id }],
+      }),
     /not held-out questions/
   );
 });
