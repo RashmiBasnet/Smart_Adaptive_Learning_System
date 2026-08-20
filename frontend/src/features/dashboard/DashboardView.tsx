@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useAuth } from "../../providers/auth-provider";
+import { useStudyMode } from "../../providers/study-mode-provider";
 import { useOverview, useRecommendation, useMasteryHistory } from "./hooks";
 import { NavBar } from "../shell/NavBar";
 import { ConceptMap } from "../../components/ConceptMap";
@@ -23,6 +24,7 @@ import type {
 
 export function DashboardView() {
   const { student } = useAuth();
+  const { opaque } = useStudyMode();
   const overview = useOverview();
   const recommendation = useRecommendation();
 
@@ -84,8 +86,9 @@ export function DashboardView() {
             Good to see you, {student?.name ?? data.student.name}
           </h1>
           <p className="mt-1.5 text-[15px] text-[var(--ink-soft)]">
-            Each concept is a node; arrows point to what it unlocks. Colour is your
-            mastery — the brass ring is what we recommend next.
+            {opaque
+              ? "Each concept is a node; arrows point to what it unlocks. The ring marks where to go next."
+              : "Each concept is a node; arrows point to what it unlocks. Colour is your mastery — the brass ring is what we recommend next."}
           </p>
         </header>
 
@@ -102,12 +105,13 @@ export function DashboardView() {
                   foundational → advanced, left to right
                 </p>
               </div>
-              <MapLegend />
+              <MapLegend opaque={opaque} />
             </div>
             <ConceptMap
               concepts={data.concepts}
               recommendedConceptId={recommendedId}
               activeConceptId={active?.concept.conceptId ?? null}
+              opaque={opaque}
               onNodeEnter={openPeek}
               onNodeLeave={scheduleClose}
             />
@@ -115,8 +119,8 @@ export function DashboardView() {
 
           {/* ── Learner-model rail ── */}
           <aside className="flex flex-col gap-4 lg:sticky lg:top-[74px]">
-            <ProgressPanel overview={data} />
-            <RailRecommendation recommendation={rec} />
+            <ProgressPanel overview={data} opaque={opaque} />
+            <RailRecommendation recommendation={rec} opaque={opaque} />
             <p className="px-1 text-xs leading-relaxed text-[var(--ink-faint)]">
               Hover a concept on the map to peek at its detail.
             </p>
@@ -129,6 +133,7 @@ export function DashboardView() {
           concept={active.concept}
           allConcepts={data.concepts}
           rect={active.rect}
+          opaque={opaque}
           onKeepOpen={keepOpen}
           onRelease={scheduleClose}
         />
@@ -137,14 +142,21 @@ export function DashboardView() {
   );
 }
 
-function MapLegend() {
-  const items: { label: string; swatch: React.ReactNode }[] = [
-    { label: "Mastered", swatch: <Dot color="var(--band-strong)" /> },
-    { label: "Developing", swatch: <Dot color="var(--band-developing)" /> },
-    { label: "Weak", swatch: <Dot color="var(--band-weak)" /> },
-    { label: "Locked", swatch: <Dot color="var(--sunk)" ring /> },
-    { label: "Next", swatch: <Dot color="transparent" brass /> },
-  ];
+function MapLegend({ opaque }: { opaque: boolean }) {
+  // Opaque mode drops the band swatches — the colour code IS the learner model.
+  // Only the non-model states (locked, recommended-next) remain.
+  const items: { label: string; swatch: React.ReactNode }[] = opaque
+    ? [
+        { label: "Locked", swatch: <Dot color="var(--sunk)" ring /> },
+        { label: "Next", swatch: <Dot color="transparent" brass /> },
+      ]
+    : [
+        { label: "Mastered", swatch: <Dot color="var(--band-strong)" /> },
+        { label: "Developing", swatch: <Dot color="var(--band-developing)" /> },
+        { label: "Weak", swatch: <Dot color="var(--band-weak)" /> },
+        { label: "Locked", swatch: <Dot color="var(--sunk)" ring /> },
+        { label: "Next", swatch: <Dot color="transparent" brass /> },
+      ];
   return (
     <ul className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-[11.5px] text-[var(--ink-soft)]">
       {items.map((it) => (
@@ -174,11 +186,34 @@ function Dot({ color, ring, brass }: { color: string; ring?: boolean; brass?: bo
   );
 }
 
-function ProgressPanel({ overview }: { overview: DashboardOverview }) {
+function ProgressPanel({
+  overview,
+  opaque,
+}: {
+  overview: DashboardOverview;
+  opaque: boolean;
+}) {
   const total = overview.concepts.length;
   const fraction = total > 0 ? overview.masteredCount / total : 0;
   const circumference = 2 * Math.PI * 15.5;
   const inProgress = overview.concepts.filter((c) => c.attempts > 0 && !c.mastered).length;
+
+  // Opaque mode: "mastered" is a learner-model judgment (a threshold crossed),
+  // so the ring, the mastered count and the in-progress count are all hidden.
+  // Only raw activity (quizzes taken) — not an estimate — remains.
+  if (opaque) {
+    return (
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-[18px] shadow-sm">
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+          Your activity
+        </p>
+        <dl className="flex flex-col gap-1.5 text-[13px]">
+          <Stat value={overview.totalAttempts} label="quizzes taken" />
+          <Stat value={total} label="concepts in this course" />
+        </dl>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-[18px] shadow-sm">
@@ -227,16 +262,23 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 // The Open Learner Model, made persistent. The reason is the PERSISTED
 // explanation from the API, shown verbatim — never truncated or regenerated.
-function RailRecommendation({
+//
+// Opaque mode keeps the recommendation TARGET (the concept + the "start
+// studying" action — the "what") but hides the reason (the "why"), retitles
+// away from "Open Learner Model", and drops the empty-state line that
+// advertises the reason mechanism.
+export function RailRecommendation({
   recommendation,
+  opaque = false,
 }: {
   recommendation: DashboardRecommendation | null;
+  opaque?: boolean;
 }) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(158deg,var(--prussian)_0%,var(--prussian-deep)_100%)] p-[18px] text-[#EAF0F7] shadow-md">
       <span className="inline-flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.15em] text-[var(--brass)]">
         <CompassIcon />
-        Open Learner Model
+        {opaque ? "Recommended next" : "Open Learner Model"}
       </span>
       {recommendation ? (
         <>
@@ -245,9 +287,11 @@ function RailRecommendation({
               {recommendation.conceptName}
             </h2>
           )}
-          <p className="mt-2 text-sm leading-relaxed text-[#DCE6F1]">
-            {recommendation.reason}
-          </p>
+          {!opaque && (
+            <p className="mt-2 text-sm leading-relaxed text-[#DCE6F1]">
+              {recommendation.reason}
+            </p>
+          )}
           {recommendation.conceptSlug && (
             <Link
               href={`/concepts/${recommendation.conceptSlug}`}
@@ -262,9 +306,11 @@ function RailRecommendation({
           <p className="mt-2.5 text-base text-[#DCE6F1]">
             Take your first quiz to get a recommendation.
           </p>
-          <p className="mt-1 text-sm text-[#9FB2C9]">
-            Every recommendation comes with the reason behind it.
-          </p>
+          {!opaque && (
+            <p className="mt-1 text-sm text-[#9FB2C9]">
+              Every recommendation comes with the reason behind it.
+            </p>
+          )}
         </>
       )}
     </div>
@@ -276,22 +322,25 @@ function RailRecommendation({
 // open while the pointer is over the node or the card (onKeepOpen/onRelease),
 // and closes on leave or Escape. Positioned with position:fixed from the node's
 // on-screen rect, flipping above the node when it sits low in the viewport.
-function ConceptPeek({
+export function ConceptPeek({
   concept,
   allConcepts,
   rect,
+  opaque = false,
   onKeepOpen,
   onRelease,
 }: {
   concept: OverviewConcept;
   allConcepts: OverviewConcept[];
   rect: DOMRect;
+  opaque?: boolean;
   onKeepOpen: () => void;
   onRelease: () => void;
 }) {
   const assessed = concept.attempts > 0;
   // Fetch history only for assessed concepts (react-query caches per concept).
-  const history = useMasteryHistory(assessed ? concept.conceptId : null);
+  // In opaque mode the trajectory is never shown, so skip the fetch entirely.
+  const history = useMasteryHistory(assessed && !opaque ? concept.conceptId : null);
   const points = history.data?.points ?? [];
   const unlocks = allConcepts.filter((c) =>
     c.prerequisites.some((p) => p.conceptId === concept.conceptId)
@@ -332,7 +381,15 @@ function ConceptPeek({
             Locked
           </span>
         ) : assessed ? (
-          <BandBadge band={concept.band} />
+          // Opaque mode: the band badge is a learner-model signal — swap it for
+          // a neutral "Assessed" chip that leaks no band.
+          opaque ? (
+            <span className="rounded-full bg-[var(--surface-2)] px-2.5 py-1 text-xs font-medium text-[var(--ink-soft)]">
+              Assessed
+            </span>
+          ) : (
+            <BandBadge band={concept.band} />
+          )
         ) : (
           <span className="rounded-full bg-[var(--surface-2)] px-2.5 py-1 text-xs font-medium text-[var(--ink-faint)]">
             Not started
@@ -340,24 +397,29 @@ function ConceptPeek({
         )}
       </div>
 
-      {assessed ? (
-        <>
-          <div className="mt-2.5 flex items-baseline justify-between">
-            <span className="text-[13px] text-[var(--ink-soft)]">Mastery</span>
-            <span className="font-mono text-[15px] font-semibold tabular-nums text-[var(--ink)]">
-              {concept.masteryPercent}%
-              {concept.mastered && <span className="ml-1.5 text-[var(--band-strong)]">✓</span>}
-            </span>
-          </div>
-          <Sparkline points={points} />
-        </>
-      ) : (
-        <p className="mt-2.5 text-[13px] leading-relaxed text-[var(--ink-soft)]">
-          No mastery estimate yet — take a quiz to start measuring this concept.
-        </p>
-      )}
+      {/* Mastery number + trajectory are learner-model signals — hidden wholesale
+          in opaque mode (the graph facts below still show in both modes). */}
+      {!opaque &&
+        (assessed ? (
+          <>
+            <div className="mt-2.5 flex items-baseline justify-between">
+              <span className="text-[13px] text-[var(--ink-soft)]">Mastery</span>
+              <span className="font-mono text-[15px] font-semibold tabular-nums text-[var(--ink)]">
+                {concept.masteryPercent}%
+                {concept.mastered && <span className="ml-1.5 text-[var(--band-strong)]">✓</span>}
+              </span>
+            </div>
+            <Sparkline points={points} />
+          </>
+        ) : (
+          <p className="mt-2.5 text-[13px] leading-relaxed text-[var(--ink-soft)]">
+            No mastery estimate yet — take a quiz to start measuring this concept.
+          </p>
+        ))}
 
-      {concept.locked && concept.lockReason && (
+      {/* Lock is enforced in both modes; the graph-derived REASON is the model
+          signal, so opaque mode shows the lock without the why. */}
+      {concept.locked && concept.lockReason && !opaque && (
         <p className="mt-2.5 rounded-lg bg-[var(--surface-2)] px-3 py-2 text-xs leading-relaxed text-[var(--ink-soft)]">
           {concept.lockReason}
         </p>
