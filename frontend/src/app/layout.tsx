@@ -9,6 +9,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "../providers/query-provider";
 import { AuthProvider } from "../providers/auth-provider";
+import { StudyModeProvider } from "../providers/study-mode-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,9 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-screen bg-[var(--paper)]">
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <StudyModeProvider>{children}</StudyModeProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>
