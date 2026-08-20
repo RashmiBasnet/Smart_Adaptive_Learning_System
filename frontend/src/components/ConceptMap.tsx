@@ -91,6 +91,11 @@ export interface ConceptMapProps {
   recommendedConceptId: number | null;
   // The concept whose peek popover is open (hovered / focused / tapped).
   activeConceptId: number | null;
+  // Study opaque mode: hide every learner-model signal on the map (band-coded
+  // fill, the mastery % inside each node, the recommendation-type label). The
+  // recommended target itself and lock states still show — adaptation is
+  // unchanged, only its explanation is hidden.
+  opaque?: boolean;
   onNodeEnter: (concept: OverviewConcept, rect: DOMRect) => void;
   onNodeLeave: () => void;
 }
@@ -99,6 +104,7 @@ export function ConceptMap({
   concepts,
   recommendedConceptId,
   activeConceptId,
+  opaque = false,
   onNodeEnter,
   onNodeLeave,
 }: ConceptMapProps) {
@@ -169,6 +175,7 @@ export function ConceptMap({
             y={y}
             recommended={concept.conceptId === recommendedConceptId}
             active={concept.conceptId === activeConceptId}
+            opaque={opaque}
             onEnter={onNodeEnter}
             onLeave={onNodeLeave}
           />
@@ -184,6 +191,7 @@ function ConceptNode({
   y,
   recommended,
   active,
+  opaque,
   onEnter,
   onLeave,
 }: {
@@ -192,6 +200,7 @@ function ConceptNode({
   y: number;
   recommended: boolean;
   active: boolean;
+  opaque: boolean;
   onEnter: (concept: OverviewConcept, rect: DOMRect) => void;
   onLeave: () => void;
 }) {
@@ -200,18 +209,25 @@ function ConceptNode({
   const enter = (e: MouseEvent | FocusEvent | KeyboardEvent) =>
     onEnter(concept, e.currentTarget.getBoundingClientRect());
 
+  // Opaque mode: assessed nodes share one neutral fill (no band colour) and
+  // carry no mastery number. Locked / not-started styling is unchanged — those
+  // are activity/graph states, not learner-model estimates.
   const fill = locked
     ? "var(--sunk)"
-    : assessed
-      ? BAND_COLOR[concept.band]
-      : "var(--surface-2)";
+    : !assessed
+      ? "var(--surface-2)"
+      : opaque
+        ? "var(--prussian)"
+        : BAND_COLOR[concept.band];
   const ring = locked || !assessed ? "var(--line-strong)" : "color-mix(in srgb, black 18%, transparent)";
 
   const stateLabel = locked
     ? "locked"
-    : assessed
-      ? `${concept.masteryPercent}% mastery`
-      : "not started";
+    : !assessed
+      ? "not started"
+      : opaque
+        ? "assessed"
+        : `${concept.masteryPercent}% mastery`;
   const ariaLabel =
     `${concept.name}, ${stateLabel}` + (recommended ? ", recommended next" : "");
 
@@ -238,12 +254,14 @@ function ConceptNode({
       <circle className="sals-node-hover" cx={x} cy={y} r={NODE_R + 6} fill="none" stroke="var(--line-strong)" strokeWidth={2} />
       <circle className="sals-node-focus" cx={x} cy={y} r={NODE_R + 8} fill="none" stroke="var(--prussian)" strokeWidth={2} />
 
-      {/* recommendation halo */}
+      {/* recommendation halo — the target is shown in BOTH modes; only the
+          label wording changes. "REVISE" would leak the recommendation TYPE
+          (the why), so opaque mode uses a neutral "NEXT". */}
       {recommended && (
         <>
           <circle cx={x} cy={y} r={NODE_R + 8} fill="none" stroke="var(--brass-deep)" strokeWidth={2.5} strokeDasharray="3 4" />
           <text x={x} y={y - NODE_R - 16} textAnchor="middle" className="font-mono" fontSize="10" fontWeight="700" letterSpacing="0.08em" fill="var(--brass-ink)">
-            ★ REVISE NEXT
+            {opaque ? "★ NEXT" : "★ REVISE NEXT"}
           </text>
         </>
       )}
@@ -262,9 +280,13 @@ function ConceptNode({
           <path d="M4 5V3a4 4 0 0 1 8 0v2" />
         </g>
       ) : assessed ? (
-        <text x={x} y={y + 5} textAnchor="middle" className="font-mono" fontSize="14" fontWeight="600" fill="#ffffff">
-          {concept.masteryPercent}%
-        </text>
+        // Opaque mode prints no mastery number — the solid neutral fill already
+        // reads as "assessed" without disclosing the estimate.
+        opaque ? null : (
+          <text x={x} y={y + 5} textAnchor="middle" className="font-mono" fontSize="14" fontWeight="600" fill="#ffffff">
+            {concept.masteryPercent}%
+          </text>
+        )
       ) : (
         <text x={x} y={y + 5} textAnchor="middle" className="font-mono" fontSize="15" fill="var(--ink-faint)">
           –
