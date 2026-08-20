@@ -43,6 +43,7 @@ model Student {
   mastery         ConceptMastery[]
   masteryHistory  MasteryHistory[]
   recommendations Recommendation[]
+  evalSubmissions EvalSubmission[]
 
   @@map("students")
 }
@@ -66,6 +67,7 @@ model Concept {
   mastery           ConceptMastery[]
   masteryHistory    MasteryHistory[]
   recommendations   Recommendation[]
+  evalSubmissions   EvalSubmission[]
 
   @@map("concepts")
 }
@@ -108,9 +110,10 @@ model Question {
   // pre/post instrument. Defaults false so all existing questions stay practice.
   heldOut     Boolean @default(false) @map("held_out")
 
-  concept   Concept            @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-  options   QuestionOption[]
-  responses QuestionResponse[]
+  concept       Concept            @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  options       QuestionOption[]
+  responses     QuestionResponse[]
+  evalResponses EvalResponse[]
 
   @@map("questions")
 }
@@ -121,8 +124,9 @@ model QuestionOption {
   text       String
   isCorrect  Boolean @map("is_correct")
 
-  question  Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  responses QuestionResponse[]
+  question      Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  responses     QuestionResponse[]
+  evalResponses EvalResponse[]
 
   @@map("question_options")
 }
@@ -211,4 +215,50 @@ model Recommendation {
   triggeredByAttempt QuizAttempt? @relation(fields: [triggeredByAttemptId], references: [id], onDelete: SetNull)
 
   @@map("recommendations")
+}
+
+enum EvalPhase {
+  PRE
+  POST
+}
+
+// A held-out pre/post evaluation sitting. Deliberately SEPARATE from
+// QuizAttempt: the eval instrument is inert (no adaptivity, no mastery or
+// recommendation side-effects). Append-only — never overwrite; the researcher
+// resolves duplicates at analysis time.
+model EvalSubmission {
+  id          Int       @id @default(autoincrement())
+  studentId   Int       @map("student_id")
+  conceptId   Int       @map("concept_id")
+  phase       EvalPhase
+  // The study condition the surrounding LEARNING session ran in, recorded so
+  // gain can be compared per condition. Null when not supplied. Kept as a free
+  // string tag (not an enum) — it is research metadata, not adaptive logic.
+  studyMode   String?   @map("study_mode")
+  correct     Int
+  total       Int
+  submittedAt DateTime  @default(now()) @map("submitted_at")
+
+  student   Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept   Concept        @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  responses EvalResponse[]
+
+  @@index([studentId, conceptId, phase])
+  @@map("eval_submissions")
+}
+
+// One row per held-out question answered in a submission. Enables item-level
+// analysis. Mirrors question_responses but points at an EvalSubmission.
+model EvalResponse {
+  id               Int     @id @default(autoincrement())
+  submissionId     Int     @map("submission_id")
+  questionId       Int     @map("question_id")
+  selectedOptionId Int?    @map("selected_option_id")
+  isCorrect        Boolean @map("is_correct")
+
+  submission     EvalSubmission  @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question       Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+
+  @@map("eval_responses")
 }
