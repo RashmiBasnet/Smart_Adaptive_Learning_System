@@ -12,6 +12,7 @@ import { getQuiz, submitQuiz } from "../../lib/api/quiz";
 import { ApiError } from "../../lib/api/client";
 import type { QuizResult, ServedQuiz, SubmitAnswer } from "../../lib/types/api";
 import { QuizQuestion } from "../../components/QuizQuestion";
+import { useStudyMode } from "../../providers/study-mode-provider";
 
 // Display-order shuffle for MCQ options. The API currently returns options in
 // stored order, and the seeded bank stores the correct answer first — served
@@ -34,6 +35,7 @@ function shuffleOptions(quiz: ServedQuiz): ServedQuiz {
 
 export function QuizRunner({ conceptId }: { conceptId: number }) {
   const queryClient = useQueryClient();
+  const { opaque } = useStudyMode();
   const quiz = useQuery({
     queryKey: ["quiz", conceptId],
     queryFn: () => getQuiz(conceptId),
@@ -77,7 +79,10 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
       return (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-5">
           <p className="font-semibold text-[var(--ink)]">Quiz locked</p>
-          <p className="mt-1 text-sm leading-relaxed text-[var(--ink-soft)]">{lockReason}</p>
+          {/* Opaque mode hides the graph-derived reason; the lock still holds. */}
+          <p className="mt-1 text-sm leading-relaxed text-[var(--ink-soft)]">
+            {opaque ? "This quiz isn't available yet." : lockReason}
+          </p>
         </div>
       );
     }
@@ -86,7 +91,7 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
     );
   }
 
-  if (result) return <QuizResultScreen result={result} />;
+  if (result) return <QuizResultScreen result={result} opaque={opaque} />;
 
   const { questions } = shuffledQuiz;
   const answeredCount = Object.keys(answers).length;
@@ -152,7 +157,19 @@ export function QuizRunner({ conceptId }: { conceptId: number }) {
 // Result screen. Wording rule (thesis-critical): the quiz result is a SCORE;
 // the mastery percentages are MASTERY. They are different numbers from the
 // API and must never be conflated or relabelled.
-function QuizResultScreen({ result }: { result: QuizResult }) {
+//
+// Opaque mode hides the two learner-model surfaces on this screen — the
+// mastery-change block (old% → new%, the ✓ and the mastery reason) and the
+// recommendation's verbatim reason. The quiz score and the per-question review
+// stay in both modes: raw correctness feedback is not a model signal, and the
+// adaptation that produced the quiz is unchanged.
+export function QuizResultScreen({
+  result,
+  opaque = false,
+}: {
+  result: QuizResult;
+  opaque?: boolean;
+}) {
   const { correctCount, totalQuestions, mastery, recommendation, review } = result;
   const masteryWentUp = mastery.newPercent >= mastery.oldPercent;
 
@@ -176,7 +193,8 @@ function QuizResultScreen({ result }: { result: QuizResult }) {
         </p>
       </div>
 
-      {/* 2. Mastery change */}
+      {/* 2. Mastery change — a learner-model surface, hidden in opaque mode. */}
+      {!opaque && (
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">
           Mastery
@@ -208,6 +226,7 @@ function QuizResultScreen({ result }: { result: QuizResult }) {
           <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">{mastery.reason}</p>
         )}
       </div>
+      )}
 
       {/* Per-question review: what was right, what was wrong, and the correct
           answer where it matters — the feedback that lets a student learn. */}
@@ -255,13 +274,17 @@ function QuizResultScreen({ result }: { result: QuizResult }) {
         </ul>
       </div>
 
-      {/* 3. New recommendation — verbatim persisted reason, prominent. */}
+      {/* 3. New recommendation — verbatim persisted reason, prominent. In
+          opaque mode the reason (the why) is replaced by a neutral pointer back
+          to the dashboard, where the recommendation target still shows. */}
       <div className="rounded-2xl bg-[linear-gradient(158deg,var(--prussian)_0%,var(--prussian-deep)_100%)] p-6 text-white shadow-md">
         <p className="text-xs font-semibold uppercase tracking-widest text-[var(--brass)]">
           What next
         </p>
         <p className="mt-2 text-base leading-relaxed text-[#DCE6F1]">
-          {recommendation.reason}
+          {opaque
+            ? "Head back to your dashboard for your next concept."
+            : recommendation.reason}
         </p>
       </div>
 
