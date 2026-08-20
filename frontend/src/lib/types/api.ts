@@ -169,3 +169,42 @@ export interface QuizResult {
     persisted: boolean;
   };
 }
+
+// --- eval (study instrument) ---
+//
+// The held-out pre/post test. Addressed by slug (not numeric id), not
+// prerequisite-gated, and returns NO per-question feedback by design. The
+// question shape is identical to a served quiz question but is kept named
+// separately so the instrument's contract is independently visible.
+
+export type EvalPhase = "PRE" | "POST";
+
+export interface EvalQuestionDto {
+  id: number;
+  difficulty: string;
+  stem: string;
+  options: QuizOptionDto[];
+}
+
+export interface EvalQuestionSet {
+  conceptId: number;
+  conceptSlug: string;
+  conceptTitle: string;
+  totalQuestions: number;
+  questions: EvalQuestionDto[];
+}
+
+export interface EvalSubmitAnswer {
+  questionId: number;
+  selectedOptionId: number | null;
+}
+
+// Returned by the API but deliberately NOT rendered to the participant — the
+// researcher reads scores from the database, never off the screen.
+export interface EvalResult {
+  submissionId: number;
+  conceptSlug: string;
+  conceptTitle: string;
+  correct: number;
+  total: number;
+}
