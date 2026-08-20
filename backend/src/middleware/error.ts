@@ -18,7 +18,7 @@ export function errorHandler(
 
   // Errors services raise deliberately (e.g. 401, 409) carry their own status.
   if (err instanceof HttpError) {
-    return res.status(err.statusCode).json({ error: err.message });
+    return res.status(err.statusCode).json({ error: err.message, ...err.extra });
   }
 
   // Anything else is unexpected: log it and return a generic 500.
