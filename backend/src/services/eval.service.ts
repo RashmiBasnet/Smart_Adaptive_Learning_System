@@ -94,12 +94,15 @@ export async function getHeldOutQuestions(conceptSlug: string) {
   };
 }
 
-// POST: grade held-out answers and return the score only. Does NOT update
-// mastery, create a QuizAttempt, or generate a recommendation — an evaluation
-// submission is intentionally inert with respect to the adaptive flow.
+// POST: grade held-out answers, PERSIST the sitting, and return the score. The
+// submission and its per-question responses are the only rows written. It is
+// intentionally inert with respect to the adaptive flow: it does NOT create a
+// QuizAttempt, update ConceptMastery, write MasteryHistory, or generate a
+// Recommendation. That inertness is asserted in the integration test.
 export async function gradeHeldOutSubmission(
+  studentId: number,
   conceptSlug: string,
-  answers: EvalSubmitInput["answers"]
+  input: EvalSubmitInput
 ) {
   const concept = await resolveConcept(conceptSlug);
 
@@ -110,14 +113,48 @@ export async function gradeHeldOutSubmission(
 
   // Answers may only reference this concept's held-out questions — keeps the
   // instrument clean and rejects practice questions submitted by mistake.
-  const heldOutIds = new Set(heldOut.map((q) => q.id));
-  if (answers.some((a) => !heldOutIds.has(a.questionId))) {
+  const heldOutById = new Map(heldOut.map((q) => [q.id, q]));
+  if (input.answers.some((a) => !heldOutById.has(a.questionId))) {
     throw new HttpError(400, "One or more answers are not held-out questions for this concept");
   }
 
-  const { correct, total } = gradeHeldOut(heldOut, answers);
+  const { correct, total } = gradeHeldOut(heldOut, input.answers);
+
+  // Per-answer correctness, using the same rule as gradeHeldOut: a chosen
+  // option counts only if it is the correct option OF THAT question.
+  const answerIsCorrect = (a: EvalSubmitInput["answers"][number]): boolean => {
+    if (a.selectedOptionId == null) return false;
+    const chosen = heldOutById
+      .get(a.questionId)
+      ?.options.find((o) => o.id === a.selectedOptionId);
+    return chosen?.isCorrect === true;
+  };
+
+  // One atomic write via a nested create: the submission plus its response
+  // rows, and nothing else. (A single nested create is transactional, which is
+  // why the response rows can carry the new submission's id without a manual
+  // two-step $transaction.)
+  const submission = await prisma.evalSubmission.create({
+    data: {
+      studentId,
+      conceptId: concept.id,
+      phase: input.phase,
+      studyMode: input.studyMode ?? null,
+      correct,
+      total,
+      responses: {
+        create: input.answers.map((a) => ({
+          questionId: a.questionId,
+          selectedOptionId: a.selectedOptionId ?? null,
+          isCorrect: answerIsCorrect(a),
+        })),
+      },
+    },
+    select: { id: true },
+  });
 
   return {
+    submissionId: submission.id,
     conceptSlug: concept.slug,
     conceptTitle: concept.title,
     correct,
